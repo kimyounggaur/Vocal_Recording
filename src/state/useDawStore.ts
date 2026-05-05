@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type {
   AudioClip,
   AutoPitchSettings,
+  DelaySettings,
+  EqSettings,
   InputChannel,
   InputDevice,
   MixerState,
@@ -28,6 +30,33 @@ import { beatToSeconds, clamp, MAX_BPM, MIN_BPM, secondsToBeat, snapBeatToGrid }
 
 type MixerKey = keyof MixerState
 type AutoPitchKey = keyof AutoPitchSettings
+
+const defaultDelaySettings: DelaySettings = {
+  enabled: false,
+  timeMs: 240,
+  feedback: 28,
+  mix: 18,
+}
+
+const defaultEqBands: EqSettings = {
+  low: 0,
+  lowMid: 0,
+  mid: 0,
+  highMid: 0,
+  high: 0,
+}
+
+const defaultMixer: MixerState = {
+  muted: false,
+  solo: false,
+  volume: 72,
+  pan: 0,
+  reverb: 18,
+  reverbSize: 52,
+  reverbTone: 58,
+  delay: defaultDelaySettings,
+  eqBands: defaultEqBands,
+}
 
 type DawState = {
   project: Project
@@ -93,13 +122,7 @@ const defaultTrack: Track = {
   name: 'Voice/Audio',
   type: 'voice-audio',
   armed: true,
-  mixer: {
-    muted: false,
-    solo: false,
-    volume: 72,
-    pan: 0,
-    reverb: 18,
-  },
+  mixer: defaultMixer,
 }
 
 const inputDevices: InputDevice[] = [
@@ -162,6 +185,24 @@ function formatSaveTime(date: Date): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function normalizeTrack(track: Track): Track {
+  return {
+    ...track,
+    mixer: {
+      ...defaultMixer,
+      ...track.mixer,
+      delay: {
+        ...defaultDelaySettings,
+        ...track.mixer.delay,
+      },
+      eqBands: {
+        ...defaultEqBands,
+        ...track.mixer.eqBands,
+      },
+    },
+  }
 }
 
 export const useDawStore = create<DawState>((set, get) => ({
@@ -396,7 +437,8 @@ export const useDawStore = create<DawState>((set, get) => ({
         persistedProject.clips.map(async (clip) => [clip.blobId, await loadAudioBlob(clip.blobId)] as const),
       )
       const nextAudioBlobs: Record<string, Blob> = {}
-      const nextTracks = persistedProject.tracks.length > 0 ? persistedProject.tracks : [defaultTrack]
+      const nextTracks = (persistedProject.tracks.length > 0 ? persistedProject.tracks : [defaultTrack])
+        .map(normalizeTrack)
       const nextClips: AudioClip[] = persistedProject.clips
         .filter((clip) => nextTracks.some((track) => track.id === clip.trackId))
         .map((clip) => {

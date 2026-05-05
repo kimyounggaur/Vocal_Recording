@@ -13,6 +13,8 @@ import {
 import { Knob } from './Knob'
 import type {
   AutoPitchSettings,
+  DelaySettings,
+  EqBand,
   InputChannel,
   InputDevice,
   MixerState,
@@ -51,6 +53,13 @@ type BottomPanelProps = {
 const pitchCategories: PitchCategory[] = ['Essentials', 'Pop', 'Rap', 'Natural']
 const pitchScales: PitchScale[] = ['Chromatic', 'Major', 'Minor']
 const keys: PitchKey[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const eqBands: Array<{ key: EqBand; label: string }> = [
+  { key: 'low', label: '100' },
+  { key: 'lowMid', label: '250' },
+  { key: 'mid', label: '1k' },
+  { key: 'highMid', label: '4k' },
+  { key: 'high', label: '10k' },
+]
 
 function getPanLabel(value: number): string {
   if (value === 0) {
@@ -76,6 +85,14 @@ function getPitchAmountLabel(value: number): string {
   return 'Heaviest'
 }
 
+function formatDb(value: number): string {
+  if (value > 0) {
+    return `+${value}`
+  }
+
+  return String(value)
+}
+
 export function BottomPanel({
   autoPitch,
   inputDevices,
@@ -95,6 +112,18 @@ export function BottomPanel({
 }: BottomPanelProps) {
   const pitchAmountLabel = getPitchAmountLabel(autoPitch.amount)
   const isRecordingActive = recording.status === 'arming' || recording.status === 'recording'
+  const updateDelay = <K extends keyof DelaySettings>(key: K, value: DelaySettings[K]) => {
+    onUpdateMixer(track.id, 'delay', {
+      ...track.mixer.delay,
+      [key]: value,
+    })
+  }
+  const updateEqBand = (band: EqBand, value: number) => {
+    onUpdateMixer(track.id, 'eqBands', {
+      ...track.mixer.eqBands,
+      [band]: value,
+    })
+  }
 
   return (
     <section className="bottom-panel" aria-label="Voice and audio controls">
@@ -276,6 +305,146 @@ export function BottomPanel({
             </div>
           </div>
         </article>
+
+        <section className="effects-rack" aria-label="Track effects">
+          <article className="effect-card">
+            <div className="effect-card-head">
+              <span>
+                <Sparkles size={14} />
+                Delay
+              </span>
+              <button
+                aria-label="Enable delay"
+                className={track.mixer.delay.enabled ? 'effect-toggle is-on' : 'effect-toggle'}
+                onClick={() => updateDelay('enabled', !track.mixer.delay.enabled)}
+              >
+                <span />
+              </button>
+            </div>
+            <label className="effect-slider">
+              <span>
+                <strong>Time</strong>
+                <em>{track.mixer.delay.timeMs} ms</em>
+              </span>
+              <input
+                aria-label="Delay time"
+                max={700}
+                min={40}
+                onChange={(event) => updateDelay('timeMs', Number(event.currentTarget.value))}
+                step={5}
+                type="range"
+                value={track.mixer.delay.timeMs}
+              />
+            </label>
+            <label className="effect-slider">
+              <span>
+                <strong>Feedback</strong>
+                <em>{track.mixer.delay.feedback}%</em>
+              </span>
+              <input
+                aria-label="Delay feedback"
+                max={90}
+                min={0}
+                onChange={(event) => updateDelay('feedback', Number(event.currentTarget.value))}
+                type="range"
+                value={track.mixer.delay.feedback}
+              />
+            </label>
+            <label className="effect-slider">
+              <span>
+                <strong>Mix</strong>
+                <em>{track.mixer.delay.mix}%</em>
+              </span>
+              <input
+                aria-label="Delay mix"
+                max={100}
+                min={0}
+                onChange={(event) => updateDelay('mix', Number(event.currentTarget.value))}
+                type="range"
+                value={track.mixer.delay.mix}
+              />
+            </label>
+          </article>
+
+          <article className="effect-card">
+            <div className="effect-card-head">
+              <span>
+                <Sparkles size={14} />
+                Reverb
+              </span>
+              <small>{track.mixer.reverb}%</small>
+            </div>
+            <label className="effect-slider">
+              <span>
+                <strong>Mix</strong>
+                <em>{track.mixer.reverb}%</em>
+              </span>
+              <input
+                aria-label="Reverb mix"
+                max={100}
+                min={0}
+                onChange={(event) => onUpdateMixer(track.id, 'reverb', Number(event.currentTarget.value))}
+                type="range"
+                value={track.mixer.reverb}
+              />
+            </label>
+            <label className="effect-slider">
+              <span>
+                <strong>Size</strong>
+                <em>{track.mixer.reverbSize}%</em>
+              </span>
+              <input
+                aria-label="Reverb size"
+                max={100}
+                min={0}
+                onChange={(event) => onUpdateMixer(track.id, 'reverbSize', Number(event.currentTarget.value))}
+                type="range"
+                value={track.mixer.reverbSize}
+              />
+            </label>
+            <label className="effect-slider">
+              <span>
+                <strong>Tone</strong>
+                <em>{track.mixer.reverbTone}%</em>
+              </span>
+              <input
+                aria-label="Reverb tone"
+                max={100}
+                min={0}
+                onChange={(event) => onUpdateMixer(track.id, 'reverbTone', Number(event.currentTarget.value))}
+                type="range"
+                value={track.mixer.reverbTone}
+              />
+            </label>
+          </article>
+
+          <article className="effect-card eq-card">
+            <div className="effect-card-head">
+              <span>
+                <SlidersHorizontal size={14} />
+                Graphic EQ
+              </span>
+              <small>dB</small>
+            </div>
+            <div className="eq-bands" aria-label="Graphic EQ bands">
+              {eqBands.map((band) => (
+                <label className="eq-band" key={band.key}>
+                  <small>{formatDb(track.mixer.eqBands[band.key])}</small>
+                  <input
+                    aria-label={`EQ ${band.label}`}
+                    aria-orientation="vertical"
+                    max={12}
+                    min={-12}
+                    onChange={(event) => updateEqBand(band.key, Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.eqBands[band.key]}
+                  />
+                  <strong>{band.label}</strong>
+                </label>
+              ))}
+            </div>
+          </article>
+        </section>
 
         <aside className="mixer-strip">
           <label className="vertical-fader">

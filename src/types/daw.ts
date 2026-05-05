@@ -36,6 +36,17 @@ export type PitchKey =
   | 'A#'
   | 'B'
 
+export type EqBand = 'low' | 'lowMid' | 'mid' | 'highMid' | 'high'
+
+export type DelaySettings = {
+  enabled: boolean
+  timeMs: number
+  feedback: number
+  mix: number
+}
+
+export type EqSettings = Record<EqBand, number>
+
 export type TransportState = {
   isPlaying: boolean
   isRecording: boolean
@@ -49,6 +60,10 @@ export type MixerState = {
   volume: number
   pan: number
   reverb: number
+  reverbSize: number
+  reverbTone: number
+  delay: DelaySettings
+  eqBands: EqSettings
 }
 
 export type Track = {
