@@ -135,6 +135,13 @@ export function BottomPanel({
       [band]: value,
     })
   }
+  const compressor = track.mixer.compressor
+  const compressorReduction = compressor.enabled
+    ? Math.min(100, Math.abs(compressor.threshold) * 1.25 + compressor.ratio * 2.4)
+    : 3
+  const compressorNeedle = compressor.enabled
+    ? -42 + (compressorReduction / 100) * 84
+    : -48
 
   return (
     <section className="bottom-panel" aria-label="Voice and audio controls">
@@ -709,104 +716,139 @@ export function BottomPanel({
             </div>
           </article>
 
-          <article className="compressor-panel" aria-label="Compressor">
-            <div className="compressor-head">
-              <span>
-                <Gauge size={14} />
-                Compressor
-              </span>
-              <button
-                aria-label="Enable compressor"
-                className={track.mixer.compressor.enabled ? 'effect-toggle is-on' : 'effect-toggle'}
-                onClick={() => updateCompressor('enabled', !track.mixer.compressor.enabled)}
-              >
-                <span />
-              </button>
-            </div>
-            <div className="compressor-meter" aria-hidden="true">
-              <span>GR</span>
-              <i
-                style={{
-                  width: `${track.mixer.compressor.enabled ? Math.min(100, Math.abs(track.mixer.compressor.threshold) * 2) : 4}%`,
-                }}
-              />
-            </div>
-            <label className="compressor-slider">
-              <span>
-                <strong>Threshold</strong>
-                <em>{track.mixer.compressor.threshold} dB</em>
-              </span>
-              <input
-                aria-label="Compressor threshold"
-                max={0}
-                min={-60}
-                onChange={(event) => updateCompressor('threshold', Number(event.currentTarget.value))}
-                type="range"
-                value={track.mixer.compressor.threshold}
-              />
-            </label>
-            <label className="compressor-slider">
-              <span>
-                <strong>Ratio</strong>
-                <em>{track.mixer.compressor.ratio}:1</em>
-              </span>
-              <input
-                aria-label="Compressor ratio"
-                max={20}
-                min={1}
-                onChange={(event) => updateCompressor('ratio', Number(event.currentTarget.value))}
-                step={0.5}
-                type="range"
-                value={track.mixer.compressor.ratio}
-              />
-            </label>
-            <div className="compressor-mini-grid">
-              <label className="compressor-knob-control">
-                <span className="compressor-knob">
-                  <span style={{ transform: `rotate(${-132 + (track.mixer.compressor.attackMs / 100) * 264}deg)` }} />
-                  <input
-                    aria-label="Compressor attack"
-                    max={100}
-                    min={1}
-                    onChange={(event) => updateCompressor('attackMs', Number(event.currentTarget.value))}
-                    type="range"
-                    value={track.mixer.compressor.attackMs}
+          <article className="tube-compressor-panel" aria-label="Compressor">
+            <aside className="tube-comp-side">
+              <button className="tube-comp-pill" type="button">PRESETS</button>
+              <span>MODE</span>
+              <strong>STD</strong>
+            </aside>
+
+            <div className="tube-comp-main">
+              <div className="tube-comp-bay" aria-hidden="true">
+                <span className="tube-can tube-can-left" />
+                <span className="tube-bottle tube-bottle-sm" />
+                <div className="tube-comp-vu">
+                  <span className="vu-scale">
+                    <i>-20</i>
+                    <i>-10</i>
+                    <i>-5</i>
+                    <i>0</i>
+                  </span>
+                  <strong>DB GAIN REDUCTION</strong>
+                  <span
+                    className="tube-vu-needle"
+                    style={{ transform: `translateX(-50%) rotate(${compressorNeedle}deg)` }}
                   />
-                </span>
-                <strong>Attack</strong>
-                <small>{track.mixer.compressor.attackMs} ms</small>
-              </label>
-              <label className="compressor-knob-control">
-                <span className="compressor-knob">
-                  <span style={{ transform: `rotate(${-132 + (track.mixer.compressor.releaseMs / 500) * 264}deg)` }} />
-                  <input
-                    aria-label="Compressor release"
-                    max={500}
-                    min={20}
-                    onChange={(event) => updateCompressor('releaseMs', Number(event.currentTarget.value))}
-                    type="range"
-                    value={track.mixer.compressor.releaseMs}
-                  />
-                </span>
-                <strong>Release</strong>
-                <small>{track.mixer.compressor.releaseMs} ms</small>
-              </label>
-              <label className="compressor-knob-control">
-                <span className="compressor-knob">
-                  <span style={{ transform: `rotate(${-132 + ((track.mixer.compressor.makeupGain + 12) / 24) * 264}deg)` }} />
-                  <input
-                    aria-label="Compressor makeup"
-                    max={12}
-                    min={-12}
-                    onChange={(event) => updateCompressor('makeupGain', Number(event.currentTarget.value))}
-                    type="range"
-                    value={track.mixer.compressor.makeupGain}
-                  />
-                </span>
-                <strong>Makeup</strong>
-                <small>{formatDb(track.mixer.compressor.makeupGain)} dB</small>
-              </label>
+                </div>
+                <span className="tube-glass" />
+                <span className="tube-can tube-can-right" />
+              </div>
+
+              <div className="tube-comp-controls">
+                <label className="tube-comp-knob-control large">
+                  <span className="tube-comp-knob">
+                    <span style={{ transform: `rotate(${-132 + ((compressor.threshold + 60) / 60) * 264}deg)` }} />
+                    <input
+                      aria-label="Compressor threshold"
+                      max={0}
+                      min={-60}
+                      onChange={(event) => updateCompressor('threshold', Number(event.currentTarget.value))}
+                      type="range"
+                      value={compressor.threshold}
+                    />
+                  </span>
+                  <strong>THRESHOLD</strong>
+                  <small>{compressor.threshold} dB</small>
+                </label>
+
+                <label className="tube-comp-knob-control large">
+                  <span className="tube-comp-knob">
+                    <span style={{ transform: `rotate(${-132 + ((compressor.ratio - 1) / 19) * 264}deg)` }} />
+                    <input
+                      aria-label="Compressor ratio"
+                      max={20}
+                      min={1}
+                      onChange={(event) => updateCompressor('ratio', Number(event.currentTarget.value))}
+                      step={0.5}
+                      type="range"
+                      value={compressor.ratio}
+                    />
+                  </span>
+                  <strong>RATIO</strong>
+                  <small>{compressor.ratio}:1</small>
+                </label>
+
+                <label className="tube-comp-knob-control">
+                  <span className="tube-comp-knob small">
+                    <span style={{ transform: `rotate(${-132 + (compressor.attackMs / 100) * 264}deg)` }} />
+                    <input
+                      aria-label="Compressor attack"
+                      max={100}
+                      min={1}
+                      onChange={(event) => updateCompressor('attackMs', Number(event.currentTarget.value))}
+                      type="range"
+                      value={compressor.attackMs}
+                    />
+                  </span>
+                  <strong>ATTACK</strong>
+                  <small>{compressor.attackMs} ms</small>
+                </label>
+
+                <label className="tube-comp-knob-control">
+                  <span className="tube-comp-knob small">
+                    <span style={{ transform: `rotate(${-132 + (compressor.releaseMs / 500) * 264}deg)` }} />
+                    <input
+                      aria-label="Compressor release"
+                      max={500}
+                      min={20}
+                      onChange={(event) => updateCompressor('releaseMs', Number(event.currentTarget.value))}
+                      type="range"
+                      value={compressor.releaseMs}
+                    />
+                  </span>
+                  <strong>RELEASE</strong>
+                  <small>{compressor.releaseMs} ms</small>
+                </label>
+
+                <label className="tube-comp-knob-control">
+                  <span className="tube-comp-knob small">
+                    <span style={{ transform: `rotate(${-132 + ((compressor.makeupGain + 12) / 24) * 264}deg)` }} />
+                    <input
+                      aria-label="Compressor makeup"
+                      max={12}
+                      min={-12}
+                      onChange={(event) => updateCompressor('makeupGain', Number(event.currentTarget.value))}
+                      type="range"
+                      value={compressor.makeupGain}
+                    />
+                  </span>
+                  <strong>MAKE UP</strong>
+                  <small>{formatDb(compressor.makeupGain)} dB</small>
+                </label>
+
+                <button
+                  aria-label="Enable compressor"
+                  className={compressor.enabled ? 'tube-comp-power is-on' : 'tube-comp-power'}
+                  onClick={() => updateCompressor('enabled', !compressor.enabled)}
+                  type="button"
+                >
+                  <span />
+                  POWER
+                </button>
+              </div>
+
+              <div className="tube-comp-name">
+                <span>{Math.round(compressorReduction)} GR</span>
+                <strong>ROYAL TUBE</strong>
+                <em>COMP-76</em>
+              </div>
             </div>
+
+            <aside className="tube-comp-side right">
+              <button className="tube-comp-pill" type="button">SIZE</button>
+              <span>OVS</span>
+              <strong>1X</strong>
+            </aside>
           </article>
 
           <article className="effect-card eq-card">

@@ -66,7 +66,7 @@ select {
 .daw-shell {
   display: grid;
   grid-template-rows: 108px minmax(360px, 1fr) 392px;
-  width: max(100vw, 1800px);
+  width: max(100vw, 1900px);
   height: 100vh;
   min-height: 760px;
   overflow: hidden;
@@ -986,7 +986,7 @@ select {
 
 .panel-content {
   display: grid;
-  grid-template-columns: 220px minmax(300px, 0.55fr) minmax(1100px, 1.9fr) 120px;
+  grid-template-columns: 210px minmax(280px, 0.55fr) minmax(1220px, 1.9fr) 110px;
   gap: 12px;
   align-items: center;
   min-height: 0;
@@ -1295,8 +1295,8 @@ select {
 
 .effects-rack {
   display: grid;
-  grid-template-columns: 420px 390px 160px 120px;
-  gap: 10px;
+  grid-template-columns: 420px 390px 300px 110px;
+  gap: 8px;
   align-self: stretch;
   min-width: 0;
   overflow: hidden;
@@ -1475,6 +1475,371 @@ select {
 .compressor-knob-control small {
   color: var(--muted);
   font-weight: 850;
+}
+
+.tube-compressor-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
+  align-self: stretch;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #6c675b;
+  border-radius: 7px;
+  background:
+    linear-gradient(90deg, #77776e 0 24px, transparent 24px calc(100% - 24px), #77776e calc(100% - 24px)),
+    linear-gradient(180deg, #2a261d 0 44%, #706e63 44% 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 -36px 42px rgba(0, 0, 0, 0.26);
+}
+
+.tube-compressor-panel::before {
+  position: absolute;
+  right: 28px;
+  bottom: 70px;
+  left: 28px;
+  height: 1px;
+  content: "";
+  background: rgba(12, 10, 7, 0.7);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.tube-comp-side {
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 42px 1fr auto auto;
+  align-items: center;
+  justify-items: center;
+  gap: 5px;
+  padding: 8px 2px;
+  color: rgba(250, 247, 230, 0.82);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent 18%, rgba(0, 0, 0, 0.2) 82%),
+    linear-gradient(180deg, #8a8a80, #5f5f58);
+  font-size: 7px;
+  font-weight: 950;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.38);
+}
+
+.tube-comp-side.right {
+  background:
+    linear-gradient(270deg, rgba(255, 255, 255, 0.28), transparent 18%, rgba(0, 0, 0, 0.2) 82%),
+    linear-gradient(180deg, #8a8a80, #5f5f58);
+}
+
+.tube-comp-side span {
+  align-self: end;
+  writing-mode: vertical-rl;
+}
+
+.tube-comp-side strong {
+  display: grid;
+  min-width: 19px;
+  min-height: 13px;
+  place-items: center;
+  border-radius: 3px;
+  background: rgba(23, 22, 19, 0.34);
+  font-size: 7px;
+}
+
+.tube-comp-pill {
+  width: 19px;
+  height: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  color: transparent;
+  background:
+    radial-gradient(circle at 36% 30%, rgba(255, 255, 255, 0.94), transparent 24%),
+    linear-gradient(180deg, #f7faf8, #d5ddd7);
+  box-shadow:
+    inset 0 -2px 3px rgba(0, 0, 0, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.48);
+}
+
+.tube-comp-main {
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 98px 1fr 31px;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 7px 7px;
+}
+
+.tube-comp-bay {
+  display: grid;
+  grid-template-columns: 45px 18px minmax(76px, 1fr) 20px 43px;
+  gap: 5px;
+  align-items: end;
+  min-width: 0;
+  padding: 8px 7px 5px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 221, 164, 0.12);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(255, 219, 144, 0.16), transparent 18%),
+    radial-gradient(circle at 38% 88%, rgba(235, 199, 112, 0.16), transparent 26%),
+    #12100b;
+  box-shadow:
+    inset 0 10px 16px rgba(0, 0, 0, 0.84),
+    inset 0 -6px 10px rgba(218, 180, 90, 0.08);
+}
+
+.tube-can,
+.tube-bottle,
+.tube-glass {
+  display: block;
+  align-self: end;
+}
+
+.tube-can {
+  width: 100%;
+  border-radius: 8px 8px 2px 2px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.3), transparent 22%, rgba(0, 0, 0, 0.26) 78%),
+    linear-gradient(180deg, #d7c88d, #8f8460 62%, #4d493f);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 4px 8px rgba(0, 0, 0, 0.42);
+}
+
+.tube-can-left {
+  height: 64px;
+}
+
+.tube-can-right {
+  height: 70px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent 30%, rgba(0, 0, 0, 0.46) 84%),
+    linear-gradient(180deg, #191713, #050504);
+}
+
+.tube-bottle {
+  width: 15px;
+  height: 58px;
+  border-radius: 8px 8px 3px 3px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 212, 123, 0.88), transparent 13%),
+    linear-gradient(180deg, rgba(255, 217, 132, 0.38), rgba(49, 32, 15, 0.68));
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 0 12px rgba(245, 162, 61, 0.24);
+}
+
+.tube-glass {
+  width: 18px;
+  height: 64px;
+  border-radius: 10px 10px 3px 3px;
+  background:
+    radial-gradient(circle at 48% 18%, rgba(255, 226, 154, 0.88), transparent 12%),
+    linear-gradient(180deg, rgba(248, 193, 89, 0.54), rgba(33, 19, 9, 0.74));
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.09),
+    0 0 14px rgba(255, 158, 55, 0.3);
+}
+
+.tube-comp-vu {
+  position: relative;
+  align-self: center;
+  min-width: 0;
+  height: 70px;
+  padding: 10px 8px 7px;
+  overflow: hidden;
+  border: 5px solid #090908;
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(247, 202, 118, 0.24), transparent 46%),
+    linear-gradient(180deg, #fff7d8, #e9dfbf);
+  box-shadow:
+    inset 0 0 16px rgba(46, 34, 15, 0.32),
+    0 3px 6px rgba(0, 0, 0, 0.48);
+}
+
+.vu-scale {
+  display: flex;
+  justify-content: space-between;
+  color: #1a1713;
+  font-size: 6px;
+  font-weight: 950;
+}
+
+.tube-comp-vu strong {
+  position: absolute;
+  right: 0;
+  bottom: 22px;
+  left: 0;
+  color: rgba(30, 26, 21, 0.72);
+  font-size: 7px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.tube-vu-needle {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  width: 2px;
+  height: 44px;
+  border-radius: 999px;
+  background: #b22a22;
+  transform-origin: bottom center;
+  box-shadow: 0 0 4px rgba(178, 42, 34, 0.28);
+}
+
+.tube-comp-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px 6px;
+  align-content: end;
+  min-width: 0;
+  padding: 3px 1px 0;
+}
+
+.tube-comp-knob-control {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+  gap: 2px;
+  color: rgba(247, 243, 224, 0.86);
+  text-align: center;
+}
+
+.tube-comp-knob {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.24), transparent 17%),
+    radial-gradient(circle at center, #191916 0 47%, transparent 48%),
+    conic-gradient(from 220deg, #d3c8ac 0 34deg, #3d392f 34deg 82deg, #c3b89d 82deg 120deg, #2c2924 120deg 360deg);
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.78),
+    0 2px 4px rgba(0, 0, 0, 0.48);
+}
+
+.tube-comp-knob.small {
+  width: 38px;
+  height: 38px;
+}
+
+.tube-comp-knob span {
+  position: absolute;
+  inset: 6px;
+  z-index: 1;
+}
+
+.tube-comp-knob span::after {
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  width: 22%;
+  height: 2px;
+  content: "";
+  border-radius: 999px;
+  background: #f2eee1;
+}
+
+.tube-comp-knob input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.tube-comp-knob-control strong,
+.tube-comp-knob-control small {
+  overflow: hidden;
+  max-width: 74px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tube-comp-knob-control strong {
+  color: #f3eedc;
+  font-size: 8px;
+  font-weight: 950;
+}
+
+.tube-comp-knob-control small {
+  color: rgba(247, 243, 224, 0.7);
+  font-size: 7px;
+  font-weight: 850;
+}
+
+.tube-comp-power {
+  display: grid;
+  min-width: 0;
+  min-height: 43px;
+  place-items: center;
+  gap: 2px;
+  border-radius: 6px;
+  color: rgba(247, 243, 224, 0.76);
+  background: rgba(18, 16, 13, 0.3);
+  font-size: 8px;
+  font-weight: 950;
+}
+
+.tube-comp-power span {
+  display: block;
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(35, 24, 22, 0.74);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 36%, rgba(255, 255, 255, 0.54), transparent 16%),
+    #8f1f1a;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.tube-comp-power.is-on span {
+  background:
+    radial-gradient(circle at 42% 36%, rgba(255, 255, 255, 0.64), transparent 16%),
+    #ff4f3f;
+  box-shadow:
+    0 0 11px rgba(255, 79, 63, 0.42),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+}
+
+.tube-comp-name {
+  display: grid;
+  grid-template-columns: 31px 1fr 45px;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: rgba(245, 240, 221, 0.84);
+}
+
+.tube-comp-name span,
+.tube-comp-name em {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.tube-comp-name strong {
+  overflow: hidden;
+  color: #f0ead7;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
 }
 
 .h-delay-panel {
@@ -2310,7 +2675,7 @@ select {
 @media (max-width: 1279px) {
   .daw-shell {
     grid-template-rows: 108px minmax(320px, 1fr) 420px;
-    width: 1800px;
+    width: 1900px;
     min-height: 820px;
   }
 
@@ -2327,7 +2692,7 @@ select {
   }
 
   .panel-content {
-    grid-template-columns: 220px 300px 1100px 120px;
+    grid-template-columns: 210px 280px 1220px 110px;
     gap: 12px;
   }
 
@@ -2339,6 +2704,6 @@ select {
 
 @media (max-width: 760px) {
   .daw-shell {
-    width: 1800px;
+    width: 1900px;
   }
 }
