@@ -41,9 +41,11 @@ type DawState = {
   toggleRecord: () => void
   startRecordingTransport: () => void
   finishRecordingTransport: () => void
+  finishPlaybackTransport: () => void
   stopTransport: () => void
   returnToStart: () => void
   seekToBeat: (beat: number) => void
+  setTransportPosition: (seconds: number, bpm?: number) => void
   advanceTransport: (deltaSeconds: number) => void
   setProjectBpm: (bpm: number) => void
   setProjectKey: (key: ProjectKey) => void
@@ -206,6 +208,14 @@ export const useDawStore = create<DawState>((set, get) => ({
         isRecording: false,
       },
     })),
+  finishPlaybackTransport: () =>
+    set(({ transport }) => ({
+      transport: {
+        ...transport,
+        isPlaying: false,
+        isRecording: false,
+      },
+    })),
   stopTransport: () =>
     set(({ recording, transport }) => ({
       recording: {
@@ -238,6 +248,19 @@ export const useDawStore = create<DawState>((set, get) => ({
           ...transport,
           currentBeat: clampedBeat,
           currentTimeSeconds: beatToSeconds(clampedBeat, project.bpm),
+        },
+      }
+    }),
+  setTransportPosition: (seconds, bpm) =>
+    set(({ project, transport }) => {
+      const nextSeconds = Math.max(0, seconds)
+      const nextBpm = bpm ?? project.bpm
+
+      return {
+        transport: {
+          ...transport,
+          currentTimeSeconds: nextSeconds,
+          currentBeat: secondsToBeat(nextSeconds, nextBpm),
         },
       }
     }),

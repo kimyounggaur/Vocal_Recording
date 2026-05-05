@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar'
 import { Timeline } from './components/Timeline'
 import { TopBar } from './components/TopBar'
 import { useMicrophoneRecorder } from './hooks/useMicrophoneRecorder'
+import { usePlaybackEngine } from './hooks/usePlaybackEngine'
 import { useDawStore } from './state/useDawStore'
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
 
   const selectedTrack = tracks.find((track) => track.id === selectedTrackId) ?? tracks[0]
   const recorder = useMicrophoneRecorder()
+  usePlaybackEngine()
 
   const handleStop = () => {
     if (transport.isRecording) {
@@ -60,7 +62,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!transport.isPlaying && !transport.isRecording) {
+    if (!transport.isRecording) {
       return undefined
     }
 
