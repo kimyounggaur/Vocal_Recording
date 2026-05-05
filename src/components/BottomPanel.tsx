@@ -85,6 +85,10 @@ function getPitchAmountLabel(value: number): string {
   return 'Heaviest'
 }
 
+function getDelayDisplay(timeMs: number): string {
+  return String(Math.round(timeMs)).padStart(4, '0')
+}
+
 function formatDb(value: number): string {
   if (value > 0) {
     return `+${value}`
@@ -307,63 +311,192 @@ export function BottomPanel({
         </article>
 
         <section className="effects-rack" aria-label="Track effects">
-          <article className="effect-card">
-            <div className="effect-card-head">
-              <span>
-                <Sparkles size={14} />
-                Delay
-              </span>
+          <article className="h-delay-panel" aria-label="Hybrid Delay">
+            <div className="delay-tap-section">
               <button
                 aria-label="Enable delay"
-                className={track.mixer.delay.enabled ? 'effect-toggle is-on' : 'effect-toggle'}
+                className={track.mixer.delay.enabled ? 'delay-power is-on' : 'delay-power'}
                 onClick={() => updateDelay('enabled', !track.mixer.delay.enabled)}
               >
                 <span />
               </button>
+              <button
+                className={track.mixer.delay.loFi ? 'delay-mode-button is-on' : 'delay-mode-button'}
+                onClick={() => updateDelay('loFi', !track.mixer.delay.loFi)}
+              >
+                LoFi
+              </button>
+              <strong>HYBRID</strong>
             </div>
-            <label className="effect-slider">
-              <span>
-                <strong>Time</strong>
-                <em>{track.mixer.delay.timeMs} ms</em>
+
+            <label className="delay-big-control">
+              <span className="hardware-knob big">
+                <span style={{ transform: `rotate(${-132 + ((track.mixer.delay.timeMs - 40) / 660) * 264}deg)` }} />
+                <input
+                  aria-label="Delay time"
+                  max={700}
+                  min={40}
+                  onChange={(event) => updateDelay('timeMs', Number(event.currentTarget.value))}
+                  step={5}
+                  type="range"
+                  value={track.mixer.delay.timeMs}
+                />
               </span>
-              <input
-                aria-label="Delay time"
-                max={700}
-                min={40}
-                onChange={(event) => updateDelay('timeMs', Number(event.currentTarget.value))}
-                step={5}
-                type="range"
-                value={track.mixer.delay.timeMs}
-              />
+              <strong>DELAY</strong>
+              <small>40 - 700 ms</small>
             </label>
-            <label className="effect-slider">
-              <span>
-                <strong>Feedback</strong>
-                <em>{track.mixer.delay.feedback}%</em>
+
+            <div className="delay-center">
+              <div className="delay-mode-row">
+                <button className="delay-mode-button">ØL</button>
+                <button
+                  className={track.mixer.delay.pingPong ? 'delay-mode-button is-on' : 'delay-mode-button'}
+                  onClick={() => updateDelay('pingPong', !track.mixer.delay.pingPong)}
+                >
+                  PING PONG
+                </button>
+                <button className="delay-mode-button">ØR</button>
+              </div>
+              <div className="delay-led" aria-label="Delay time display">{getDelayDisplay(track.mixer.delay.timeMs)}</div>
+              <div className="delay-unit-row">
+                <button className="delay-mode-button is-on">BPM</button>
+                <button className="delay-mode-button">MS</button>
+              </div>
+            </div>
+
+            <label className="delay-big-control">
+              <span className="hardware-knob big">
+                <span style={{ transform: `rotate(${-132 + (track.mixer.delay.feedback / 90) * 264}deg)` }} />
+                <input
+                  aria-label="Delay feedback"
+                  max={90}
+                  min={0}
+                  onChange={(event) => updateDelay('feedback', Number(event.currentTarget.value))}
+                  type="range"
+                  value={track.mixer.delay.feedback}
+                />
               </span>
-              <input
-                aria-label="Delay feedback"
-                max={90}
-                min={0}
-                onChange={(event) => updateDelay('feedback', Number(event.currentTarget.value))}
-                type="range"
-                value={track.mixer.delay.feedback}
-              />
+              <strong>FEEDBACK</strong>
+              <small>{track.mixer.delay.feedback}%</small>
             </label>
-            <label className="effect-slider">
-              <span>
-                <strong>Mix</strong>
-                <em>{track.mixer.delay.mix}%</em>
-              </span>
-              <input
-                aria-label="Delay mix"
-                max={100}
-                min={0}
-                onChange={(event) => updateDelay('mix', Number(event.currentTarget.value))}
-                type="range"
-                value={track.mixer.delay.mix}
-              />
-            </label>
+
+            <div className="delay-meter" aria-hidden="true">
+              {[-0, -3, -6, -12, -24, -36, -48].map((mark) => (
+                <span key={mark}>{mark}</span>
+              ))}
+              <i style={{ height: `${Math.max(8, track.mixer.delay.mix)}%` }} />
+            </div>
+
+            <div className="delay-side-controls">
+              <label className="hardware-mini-control">
+                <span className="hardware-knob small">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.delay.mix / 100) * 264}deg)` }} />
+                  <input
+                    aria-label="Delay mix"
+                    max={100}
+                    min={0}
+                    onChange={(event) => updateDelay('mix', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.delay.mix}
+                  />
+                </span>
+                <strong>DRY/WET</strong>
+                <small>{track.mixer.delay.mix}</small>
+              </label>
+              <label className="hardware-mini-control">
+                <span className="hardware-knob small">
+                  <span style={{ transform: `rotate(${-132 + ((track.mixer.delay.output + 18) / 36) * 264}deg)` }} />
+                  <input
+                    aria-label="Delay output"
+                    max={18}
+                    min={-18}
+                    onChange={(event) => updateDelay('output', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.delay.output}
+                  />
+                </span>
+                <strong>OUTPUT</strong>
+                <small>{formatDb(track.mixer.delay.output)}</small>
+              </label>
+              <label className="hardware-mini-control">
+                <span className="hardware-knob small">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.delay.analog / 4) * 264}deg)` }} />
+                  <input
+                    aria-label="Delay analog"
+                    max={4}
+                    min={0}
+                    onChange={(event) => updateDelay('analog', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.delay.analog}
+                  />
+                </span>
+                <strong>ANALOG</strong>
+                <small>{track.mixer.delay.analog === 0 ? 'OFF' : track.mixer.delay.analog}</small>
+              </label>
+            </div>
+
+            <div className="delay-bottom-controls">
+              <label className="hardware-mini-control">
+                <span className="hardware-knob medium">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.delay.modulationDepth / 100) * 264}deg)` }} />
+                  <input
+                    aria-label="Delay modulation depth"
+                    max={100}
+                    min={0}
+                    onChange={(event) => updateDelay('modulationDepth', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.delay.modulationDepth}
+                  />
+                </span>
+                <strong>DEPTH</strong>
+                <small>MODULATION</small>
+              </label>
+              <label className="hardware-mini-control">
+                <span className="hardware-knob medium">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.delay.modulationRate / 100) * 264}deg)` }} />
+                  <input
+                    aria-label="Delay modulation rate"
+                    max={100}
+                    min={0}
+                    onChange={(event) => updateDelay('modulationRate', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.delay.modulationRate}
+                  />
+                </span>
+                <strong>RATE</strong>
+                <small>{track.mixer.delay.modulationRate}%</small>
+              </label>
+              <label className="hardware-mini-control">
+                <span className="hardware-knob medium">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.delay.hiPass / 100) * 264}deg)` }} />
+                  <input
+                    aria-label="Delay hi pass"
+                    max={100}
+                    min={0}
+                    onChange={(event) => updateDelay('hiPass', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.delay.hiPass}
+                  />
+                </span>
+                <strong>HIPASS</strong>
+                <small>FILTERS</small>
+              </label>
+              <label className="hardware-mini-control">
+                <span className="hardware-knob medium">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.delay.loPass / 100) * 264}deg)` }} />
+                  <input
+                    aria-label="Delay lo pass"
+                    max={100}
+                    min={0}
+                    onChange={(event) => updateDelay('loPass', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.delay.loPass}
+                  />
+                </span>
+                <strong>LOPASS</strong>
+                <small>{track.mixer.delay.loPass}%</small>
+              </label>
+            </div>
           </article>
 
           <article className="effect-card">

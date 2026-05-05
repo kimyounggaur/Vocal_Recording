@@ -33,9 +33,17 @@ type AutoPitchKey = keyof AutoPitchSettings
 
 const defaultDelaySettings: DelaySettings = {
   enabled: false,
+  loFi: false,
+  pingPong: false,
   timeMs: 240,
   feedback: 28,
   mix: 18,
+  modulationDepth: 18,
+  modulationRate: 22,
+  hiPass: 20,
+  loPass: 78,
+  output: 0,
+  analog: 1,
 }
 
 const defaultEqBands: EqSettings = {

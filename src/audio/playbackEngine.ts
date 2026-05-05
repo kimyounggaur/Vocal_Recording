@@ -59,6 +59,10 @@ function getDelayFeedbackGain(feedback: number): number {
   return clamp(feedback / 100, 0, 1) * 0.75
 }
 
+function getOutputGain(output: number): number {
+  return Math.pow(10, clamp(output, -18, 18) / 20)
+}
+
 function getReverbFeedbackGain(size: number): number {
   return 0.18 + clamp(size / 100, 0, 1) * 0.42
 }
@@ -160,7 +164,7 @@ class PlaybackEngine {
 
       const isAudible = getTrackIsAudible(track, tracks)
       nodes.output.gain.setTargetAtTime(
-        isAudible ? getVolumeGain(track.mixer.volume) : 0,
+        isAudible ? getVolumeGain(track.mixer.volume) * getOutputGain(track.mixer.delay.output) : 0,
         this.getContext().currentTime,
         0.01,
       )

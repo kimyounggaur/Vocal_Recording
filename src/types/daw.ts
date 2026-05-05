@@ -40,9 +40,17 @@ export type EqBand = 'low' | 'lowMid' | 'mid' | 'highMid' | 'high'
 
 export type DelaySettings = {
   enabled: boolean
+  loFi: boolean
+  pingPong: boolean
   timeMs: number
   feedback: number
   mix: number
+  modulationDepth: number
+  modulationRate: number
+  hiPass: number
+  loPass: number
+  output: number
+  analog: number
 }
 
 export type EqSettings = Record<EqBand, number>
