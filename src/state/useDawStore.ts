@@ -26,6 +26,7 @@ type DawState = {
   clips: AudioClip[]
   audioBlobs: Record<string, Blob>
   selectedTrackId: string
+  selectedClipId: string | null
   autopitch: AutoPitchSettings
   inputDevices: InputDevice[]
   inputChannels: InputChannel[]
@@ -35,6 +36,7 @@ type DawState = {
   recording: RecordingState
   timeline: TimelineState
   selectTrack: (trackId: string) => void
+  selectClip: (clipId: string | null) => void
   togglePlay: () => void
   toggleRecord: () => void
   startRecordingTransport: () => void
@@ -53,6 +55,11 @@ type DawState = {
   toggleAutoPitch: () => void
   detectProjectKey: () => void
   addRecordedClip: (clip: AudioClip, blob: Blob) => void
+  moveClip: (clipId: string, startBeat: number) => void
+  trimClipStart: (clipId: string, startBeat: number) => void
+  trimClipEnd: (clipId: string, durationBeats: number) => void
+  deleteClip: (clipId: string) => void
+  deleteSelectedClip: () => void
   setInputDevices: (devices: InputDevice[]) => void
   setInputDevice: (deviceId: string) => void
   setInputChannel: (channelId: string) => void
@@ -144,6 +151,7 @@ export const useDawStore = create<DawState>((set, get) => ({
   clips: [],
   audioBlobs: {},
   selectedTrackId: defaultTrack.id,
+  selectedClipId: null,
   autopitch: initialAutoPitch,
   inputDevices,
   inputChannels,
@@ -156,6 +164,7 @@ export const useDawStore = create<DawState>((set, get) => ({
     snapToGrid: true,
   },
   selectTrack: (trackId) => set({ selectedTrackId: trackId }),
+  selectClip: (clipId) => set({ selectedClipId: clipId }),
   togglePlay: () =>
     set(({ transport }) => ({
       transport: {
@@ -334,7 +343,81 @@ export const useDawStore = create<DawState>((set, get) => ({
         [clip.blobId]: blob,
       },
       clips: [...clips, clip],
+      selectedClipId: clip.id,
     })),
+  moveClip: (clipId, startBeat) =>
+    set(({ clips, timeline }) => ({
+      clips: clips.map((clip) =>
+        clip.id === clipId
+          ? {
+              ...clip,
+              startBeat: Math.max(0, timeline.snapToGrid ? snapBeatToGrid(startBeat) : startBeat),
+            }
+          : clip,
+      ),
+    })),
+  trimClipStart: (clipId, startBeat) =>
+    set(({ clips, project, timeline }) => ({
+      clips: clips.map((clip) => {
+        if (clip.id !== clipId) {
+          return clip
+        }
+
+        const clipEndBeat = clip.startBeat + clip.durationBeats
+        const snappedStartBeat = timeline.snapToGrid ? snapBeatToGrid(startBeat) : startBeat
+        const nextStartBeat = clamp(snappedStartBeat, 0, clipEndBeat - 0.25)
+        const beatDelta = nextStartBeat - clip.startBeat
+        const nextDurationBeats = Math.max(0.25, clip.durationBeats - beatDelta)
+
+        return {
+          ...clip,
+          startBeat: nextStartBeat,
+          durationBeats: nextDurationBeats,
+          offsetSeconds: Math.max(0, clip.offsetSeconds + beatToSeconds(beatDelta, project.bpm)),
+          durationSeconds: beatToSeconds(nextDurationBeats, project.bpm),
+        }
+      }),
+    })),
+  trimClipEnd: (clipId, durationBeats) =>
+    set(({ clips, project, timeline }) => ({
+      clips: clips.map((clip) => {
+        if (clip.id !== clipId) {
+          return clip
+        }
+
+        const snappedDuration = timeline.snapToGrid ? snapBeatToGrid(durationBeats) : durationBeats
+        const nextDurationBeats = Math.max(0.25, snappedDuration)
+
+        return {
+          ...clip,
+          durationBeats: nextDurationBeats,
+          durationSeconds: beatToSeconds(nextDurationBeats, project.bpm),
+        }
+      }),
+    })),
+  deleteClip: (clipId) =>
+    set(({ audioBlobs, clips, selectedClipId }) => {
+      const clip = clips.find((item) => item.id === clipId)
+      const nextAudioBlobs = { ...audioBlobs }
+
+      if (clip) {
+        URL.revokeObjectURL(clip.objectUrl)
+        delete nextAudioBlobs[clip.blobId]
+      }
+
+      return {
+        audioBlobs: nextAudioBlobs,
+        clips: clips.filter((item) => item.id !== clipId),
+        selectedClipId: selectedClipId === clipId ? null : selectedClipId,
+      }
+    }),
+  deleteSelectedClip: () => {
+    const clipId = get().selectedClipId
+
+    if (clipId) {
+      get().deleteClip(clipId)
+    }
+  },
   setInputDevices: (devices) =>
     set(({ selectedInputDeviceId }) => {
       const nextDevices =

@@ -12,6 +12,7 @@ export default function App() {
   const tracks = useDawStore((state) => state.tracks)
   const clips = useDawStore((state) => state.clips)
   const selectedTrackId = useDawStore((state) => state.selectedTrackId)
+  const selectedClipId = useDawStore((state) => state.selectedClipId)
   const autopitch = useDawStore((state) => state.autopitch)
   const inputDevices = useDawStore((state) => state.inputDevices)
   const inputChannels = useDawStore((state) => state.inputChannels)
@@ -21,6 +22,7 @@ export default function App() {
   const recording = useDawStore((state) => state.recording)
   const timeline = useDawStore((state) => state.timeline)
   const selectTrack = useDawStore((state) => state.selectTrack)
+  const selectClip = useDawStore((state) => state.selectClip)
   const togglePlay = useDawStore((state) => state.togglePlay)
   const stopTransport = useDawStore((state) => state.stopTransport)
   const returnToStart = useDawStore((state) => state.returnToStart)
@@ -40,6 +42,10 @@ export default function App() {
   const toggleMonitoring = useDawStore((state) => state.toggleMonitoring)
   const toggleSnapToGrid = useDawStore((state) => state.toggleSnapToGrid)
   const zoomTimeline = useDawStore((state) => state.zoomTimeline)
+  const moveClip = useDawStore((state) => state.moveClip)
+  const trimClipStart = useDawStore((state) => state.trimClipStart)
+  const trimClipEnd = useDawStore((state) => state.trimClipEnd)
+  const deleteSelectedClip = useDawStore((state) => state.deleteSelectedClip)
 
   const selectedTrack = tracks.find((track) => track.id === selectedTrackId) ?? tracks[0]
   const recorder = useMicrophoneRecorder()
@@ -102,11 +108,18 @@ export default function App() {
           bpm={project.bpm}
           clips={clips}
           currentBeat={transport.currentBeat}
+          onClearClipSelection={() => selectClip(null)}
+          onDeleteSelectedClip={deleteSelectedClip}
+          onMoveClip={moveClip}
           onSeekToBeat={seekToBeat}
+          onSelectClip={selectClip}
+          onTrimClipEnd={trimClipEnd}
+          onTrimClipStart={trimClipStart}
           onToggleSnap={toggleSnapToGrid}
           onZoomIn={() => zoomTimeline('in')}
           onZoomOut={() => zoomTimeline('out')}
           pixelsPerBeat={timeline.pixelsPerBeat}
+          selectedClipId={selectedClipId}
           snapToGrid={timeline.snapToGrid}
           timeSignature={project.timeSignature}
         />

@@ -1,7 +1,11 @@
 import { FileAudio, Magnet, Search, ZoomIn, ZoomOut } from 'lucide-react'
+import { useCallback, useEffect, useRef } from 'react'
 import type { MouseEvent } from 'react'
 import type { AudioClip, TimeSignature } from '../types/daw'
 import { beatToPixels, getBarNumber, getBeatInBar, getBeatsPerBar, pixelsToBeat } from '../utils/time'
+import { TimelineClip } from './TimelineClip'
+
+type ClipEditMode = 'move' | 'trim-start' | 'trim-end'
 
 type TimelineProps = {
   bars: number
@@ -11,10 +15,25 @@ type TimelineProps = {
   pixelsPerBeat: number
   snapToGrid: boolean
   clips: AudioClip[]
+  selectedClipId: string | null
   onSeekToBeat: (beat: number) => void
+  onSelectClip: (clipId: string | null) => void
+  onClearClipSelection: () => void
+  onMoveClip: (clipId: string, startBeat: number) => void
+  onTrimClipStart: (clipId: string, startBeat: number) => void
+  onTrimClipEnd: (clipId: string, durationBeats: number) => void
+  onDeleteSelectedClip: () => void
   onToggleSnap: () => void
   onZoomIn: () => void
   onZoomOut: () => void
+}
+
+type ClipEditSession = {
+  clipId: string
+  mode: ClipEditMode
+  pointerStartX: number
+  startBeat: number
+  durationBeats: number
 }
 
 const subdivisions = 4
@@ -27,11 +46,20 @@ export function Timeline({
   pixelsPerBeat,
   snapToGrid,
   clips,
+  selectedClipId,
   onSeekToBeat,
+  onSelectClip,
+  onClearClipSelection,
+  onMoveClip,
+  onTrimClipStart,
+  onTrimClipEnd,
+  onDeleteSelectedClip,
   onToggleSnap,
   onZoomIn,
   onZoomOut,
 }: TimelineProps) {
+  const arrangementRef = useRef<HTMLDivElement | null>(null)
+  const editSessionRef = useRef<ClipEditSession | null>(null)
   const beatsPerBar = getBeatsPerBar(timeSignature)
   const barItems = Array.from({ length: bars }, (_, index) => index + 1)
   const gridColumns = bars * beatsPerBar * subdivisions
@@ -43,10 +71,86 @@ export function Timeline({
   const currentBeatInBar = getBeatInBar(currentBeat, timeSignature)
 
   const handleSeek = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) {
+      return
+    }
+
     const bounds = event.currentTarget.getBoundingClientRect()
     const x = event.clientX - bounds.left
+    onClearClipSelection()
     onSeekToBeat(pixelsToBeat(x, pixelsPerBeat))
   }
+
+  const handleEditStart = useCallback((clip: AudioClip, mode: ClipEditMode, pointerX: number) => {
+    editSessionRef.current = {
+      clipId: clip.id,
+      mode,
+      pointerStartX: pointerX,
+      startBeat: clip.startBeat,
+      durationBeats: clip.durationBeats,
+    }
+  }, [])
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const session = editSessionRef.current
+
+      if (!session) {
+        return
+      }
+
+      const beatDelta = pixelsToBeat(event.clientX - session.pointerStartX, pixelsPerBeat)
+
+      if (session.mode === 'move') {
+        onMoveClip(session.clipId, session.startBeat + beatDelta)
+        return
+      }
+
+      if (session.mode === 'trim-start') {
+        onTrimClipStart(session.clipId, session.startBeat + beatDelta)
+        return
+      }
+
+      onTrimClipEnd(session.clipId, session.durationBeats + beatDelta)
+    }
+
+    const handlePointerUp = () => {
+      editSessionRef.current = null
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+    }
+  }, [onMoveClip, onTrimClipEnd, onTrimClipStart, pixelsPerBeat])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target
+      const isTyping =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+
+      if (isTyping || !selectedClipId) {
+        return
+      }
+
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault()
+        onDeleteSelectedClip()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onDeleteSelectedClip, selectedClipId])
 
   return (
     <section className="timeline" aria-label="Timeline">
@@ -98,6 +202,7 @@ export function Timeline({
         <div
           className="arrangement"
           onClick={handleSeek}
+          ref={arrangementRef}
           style={{
             width: `${timelineWidth}px`,
           }}
@@ -122,28 +227,14 @@ export function Timeline({
           <div className="track-lane">
             <div className="record-region" />
             {clips.map((clip) => (
-              <button
-                className="audio-clip"
+              <TimelineClip
+                clip={clip}
+                isSelected={clip.id === selectedClipId}
                 key={clip.id}
-                onClick={(event) => event.stopPropagation()}
-                style={{
-                  left: `${beatToPixels(clip.startBeat, pixelsPerBeat)}px`,
-                  width: `${Math.max(80, beatToPixels(clip.durationBeats, pixelsPerBeat))}px`,
-                }}
-                title={`${clip.name} (${clip.durationSeconds.toFixed(1)}s)`}
-              >
-                <span className="clip-name">{clip.name}</span>
-                <span className="waveform">
-                  {clip.waveformPeaks.map((peak, index) => (
-                    <i
-                      key={`${clip.id}-${index}`}
-                      style={{
-                        height: `${Math.max(8, peak * 42)}px`,
-                      }}
-                    />
-                  ))}
-                </span>
-              </button>
+                onEditStart={handleEditStart}
+                onSelect={onSelectClip}
+                pixelsPerBeat={pixelsPerBeat}
+              />
             ))}
             {clips.length === 0 ? (
               <div className="drop-zone">
