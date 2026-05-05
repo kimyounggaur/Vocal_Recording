@@ -13,6 +13,7 @@ import {
 import { Knob } from './Knob'
 import type {
   AutoPitchSettings,
+  CompressorSettings,
   DelaySettings,
   EqBand,
   InputChannel,
@@ -119,6 +120,12 @@ export function BottomPanel({
   const updateDelay = <K extends keyof DelaySettings>(key: K, value: DelaySettings[K]) => {
     onUpdateMixer(track.id, 'delay', {
       ...track.mixer.delay,
+      [key]: value,
+    })
+  }
+  const updateCompressor = <K extends keyof CompressorSettings>(key: K, value: CompressorSettings[K]) => {
+    onUpdateMixer(track.id, 'compressor', {
+      ...track.mixer.compressor,
       [key]: value,
     })
   }
@@ -499,56 +506,307 @@ export function BottomPanel({
             </div>
           </article>
 
-          <article className="effect-card">
-            <div className="effect-card-head">
-              <span>
-                <Sparkles size={14} />
-                Reverb
-              </span>
-              <small>{track.mixer.reverb}%</small>
+          <article className="plate-reverb-panel" aria-label="Plate Reverb">
+            <div className="plate-main">
+              <div className="plate-brand">
+                <strong>PLATE ROOM-40</strong>
+                <span>REVERB PLATE UNIT</span>
+                <button
+                  aria-label="Enable plate reverb"
+                  className={track.mixer.reverbEnabled ? 'plate-power is-on' : 'plate-power'}
+                  onClick={() => onUpdateMixer(track.id, 'reverbEnabled', !track.mixer.reverbEnabled)}
+                >
+                  <span />
+                </button>
+                <small>POWER</small>
+                <em>STUDIO CIRCUITS</em>
+              </div>
+
+              <div className="plate-tube-panel">
+                <div className="tube-window" aria-hidden="true">
+                  <span />
+                  <i />
+                </div>
+                <label className="plate-control">
+                  <span className="plate-knob">
+                    <span style={{ transform: `rotate(${-132 + (track.mixer.reverbDrive / 100) * 264}deg)` }} />
+                    <input
+                      aria-label="Reverb drive"
+                      max={100}
+                      min={0}
+                      onChange={(event) => onUpdateMixer(track.id, 'reverbDrive', Number(event.currentTarget.value))}
+                      type="range"
+                      value={track.mixer.reverbDrive}
+                    />
+                  </span>
+                  <strong>DRIVE</strong>
+                </label>
+              </div>
+
+              <div className="plate-decay-panel">
+                <label className="plate-control">
+                  <span className="plate-knob large">
+                    <span style={{ transform: `rotate(${-132 + (track.mixer.reverbSize / 100) * 264}deg)` }} />
+                    <input
+                      aria-label="Reverb model"
+                      max={100}
+                      min={0}
+                      onChange={(event) => onUpdateMixer(track.id, 'reverbSize', Number(event.currentTarget.value))}
+                      type="range"
+                      value={track.mixer.reverbSize}
+                    />
+                  </span>
+                  <strong>MODEL</strong>
+                  <small>{Math.max(1, Math.round(track.mixer.reverbSize / 18))}</small>
+                </label>
+                <label className="decay-slider">
+                  <strong>DECAY TIME</strong>
+                  <input
+                    aria-label="Reverb decay time"
+                    max={100}
+                    min={0}
+                    onChange={(event) => onUpdateMixer(track.id, 'reverbSize', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.reverbSize}
+                  />
+                  <span>{Math.round(1 + (track.mixer.reverbSize / 100) * 5)}s</span>
+                </label>
+              </div>
+
+              <div className="plate-blend-panel">
+                <label className="plate-control">
+                  <span className="plate-knob">
+                    <span style={{ transform: `rotate(${-132 + (track.mixer.reverb / 100) * 264}deg)` }} />
+                    <input
+                      aria-label="Reverb blend"
+                      max={100}
+                      min={0}
+                      onChange={(event) => onUpdateMixer(track.id, 'reverb', Number(event.currentTarget.value))}
+                      type="range"
+                      value={track.mixer.reverb}
+                    />
+                  </span>
+                  <strong>BLEND</strong>
+                  <small>DRY / WET</small>
+                </label>
+                <label className="plate-control">
+                  <span className="plate-knob">
+                    <span style={{ transform: `rotate(${-132 + (track.mixer.reverbWidth / 100) * 264}deg)` }} />
+                    <input
+                      aria-label="Reverb width"
+                      max={100}
+                      min={0}
+                      onChange={(event) => onUpdateMixer(track.id, 'reverbWidth', Number(event.currentTarget.value))}
+                      type="range"
+                      value={track.mixer.reverbWidth}
+                    />
+                  </span>
+                  <strong>WIDTH</strong>
+                  <small>{track.mixer.reverbWidth}%</small>
+                </label>
+              </div>
             </div>
-            <label className="effect-slider">
+
+            <div className="plate-bottom">
+              <label className="plate-mini-control">
+                <span className="plate-knob mini">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.reverbPreDelay / 250) * 264}deg)` }} />
+                  <input
+                    aria-label="Reverb pre delay"
+                    max={250}
+                    min={0}
+                    onChange={(event) => onUpdateMixer(track.id, 'reverbPreDelay', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.reverbPreDelay}
+                  />
+                </span>
+                <strong>PRE-DELAY</strong>
+                <small>{track.mixer.reverbPreDelay} ms</small>
+              </label>
+
+              <label className="plate-mini-control">
+                <span className="plate-knob mini">
+                  <span style={{ transform: `rotate(${-132 + ((track.mixer.reverbHpFilter - 20) / 680) * 264}deg)` }} />
+                  <input
+                    aria-label="Reverb HP filter"
+                    max={700}
+                    min={20}
+                    onChange={(event) => onUpdateMixer(track.id, 'reverbHpFilter', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.reverbHpFilter}
+                  />
+                </span>
+                <strong>HP FILTER</strong>
+                <small>{track.mixer.reverbHpFilter} Hz</small>
+              </label>
+
+              <div className="plate-mod-section">
+                <button
+                  aria-label="Enable reverb modulation"
+                  className={track.mixer.reverbModEnabled ? 'plate-led-toggle is-on' : 'plate-led-toggle'}
+                  onClick={() => onUpdateMixer(track.id, 'reverbModEnabled', !track.mixer.reverbModEnabled)}
+                >
+                  <span />
+                  ACTIVE
+                </button>
+                <label className="plate-mini-control">
+                  <span className="plate-knob mini">
+                    <span style={{ transform: `rotate(${-132 + (track.mixer.reverbModAmount / 100) * 264}deg)` }} />
+                    <input
+                      aria-label="Reverb modulation amount"
+                      max={100}
+                      min={0}
+                      onChange={(event) => onUpdateMixer(track.id, 'reverbModAmount', Number(event.currentTarget.value))}
+                      type="range"
+                      value={track.mixer.reverbModAmount}
+                    />
+                  </span>
+                  <strong>AMOUNT</strong>
+                </label>
+              </div>
+
+              <div className="plate-eq-section">
+                <button
+                  aria-label="Enable reverb post EQ"
+                  className={track.mixer.reverbEqEnabled ? 'plate-led-toggle is-on' : 'plate-led-toggle'}
+                  onClick={() => onUpdateMixer(track.id, 'reverbEqEnabled', !track.mixer.reverbEqEnabled)}
+                >
+                  <span />
+                  ACTIVE
+                </button>
+                <label className="plate-mini-control">
+                  <span className="plate-knob mini">
+                    <span style={{ transform: `rotate(${-132 + ((track.mixer.reverbEqGain + 24) / 48) * 264}deg)` }} />
+                    <input
+                      aria-label="Reverb EQ gain"
+                      max={24}
+                      min={-24}
+                      onChange={(event) => onUpdateMixer(track.id, 'reverbEqGain', Number(event.currentTarget.value))}
+                      type="range"
+                      value={track.mixer.reverbEqGain}
+                    />
+                  </span>
+                  <strong>GAIN</strong>
+                  <small>{formatDb(track.mixer.reverbEqGain)}</small>
+                </label>
+                <label className="plate-mini-control">
+                  <span className="plate-knob mini">
+                    <span style={{ transform: `rotate(${-132 + ((track.mixer.reverbEqFrequency - 200) / 7800) * 264}deg)` }} />
+                    <input
+                      aria-label="Reverb EQ frequency"
+                      max={8000}
+                      min={200}
+                      onChange={(event) => onUpdateMixer(track.id, 'reverbEqFrequency', Number(event.currentTarget.value))}
+                      step={50}
+                      type="range"
+                      value={track.mixer.reverbEqFrequency}
+                    />
+                  </span>
+                  <strong>FREQ</strong>
+                  <small>{track.mixer.reverbEqFrequency} Hz</small>
+                </label>
+              </div>
+            </div>
+          </article>
+
+          <article className="compressor-panel" aria-label="Compressor">
+            <div className="compressor-head">
               <span>
-                <strong>Mix</strong>
-                <em>{track.mixer.reverb}%</em>
+                <Gauge size={14} />
+                Compressor
+              </span>
+              <button
+                aria-label="Enable compressor"
+                className={track.mixer.compressor.enabled ? 'effect-toggle is-on' : 'effect-toggle'}
+                onClick={() => updateCompressor('enabled', !track.mixer.compressor.enabled)}
+              >
+                <span />
+              </button>
+            </div>
+            <div className="compressor-meter" aria-hidden="true">
+              <span>GR</span>
+              <i
+                style={{
+                  width: `${track.mixer.compressor.enabled ? Math.min(100, Math.abs(track.mixer.compressor.threshold) * 2) : 4}%`,
+                }}
+              />
+            </div>
+            <label className="compressor-slider">
+              <span>
+                <strong>Threshold</strong>
+                <em>{track.mixer.compressor.threshold} dB</em>
               </span>
               <input
-                aria-label="Reverb mix"
-                max={100}
-                min={0}
-                onChange={(event) => onUpdateMixer(track.id, 'reverb', Number(event.currentTarget.value))}
+                aria-label="Compressor threshold"
+                max={0}
+                min={-60}
+                onChange={(event) => updateCompressor('threshold', Number(event.currentTarget.value))}
                 type="range"
-                value={track.mixer.reverb}
+                value={track.mixer.compressor.threshold}
               />
             </label>
-            <label className="effect-slider">
+            <label className="compressor-slider">
               <span>
-                <strong>Size</strong>
-                <em>{track.mixer.reverbSize}%</em>
+                <strong>Ratio</strong>
+                <em>{track.mixer.compressor.ratio}:1</em>
               </span>
               <input
-                aria-label="Reverb size"
-                max={100}
-                min={0}
-                onChange={(event) => onUpdateMixer(track.id, 'reverbSize', Number(event.currentTarget.value))}
+                aria-label="Compressor ratio"
+                max={20}
+                min={1}
+                onChange={(event) => updateCompressor('ratio', Number(event.currentTarget.value))}
+                step={0.5}
                 type="range"
-                value={track.mixer.reverbSize}
+                value={track.mixer.compressor.ratio}
               />
             </label>
-            <label className="effect-slider">
-              <span>
-                <strong>Tone</strong>
-                <em>{track.mixer.reverbTone}%</em>
-              </span>
-              <input
-                aria-label="Reverb tone"
-                max={100}
-                min={0}
-                onChange={(event) => onUpdateMixer(track.id, 'reverbTone', Number(event.currentTarget.value))}
-                type="range"
-                value={track.mixer.reverbTone}
-              />
-            </label>
+            <div className="compressor-mini-grid">
+              <label className="compressor-knob-control">
+                <span className="compressor-knob">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.compressor.attackMs / 100) * 264}deg)` }} />
+                  <input
+                    aria-label="Compressor attack"
+                    max={100}
+                    min={1}
+                    onChange={(event) => updateCompressor('attackMs', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.compressor.attackMs}
+                  />
+                </span>
+                <strong>Attack</strong>
+                <small>{track.mixer.compressor.attackMs} ms</small>
+              </label>
+              <label className="compressor-knob-control">
+                <span className="compressor-knob">
+                  <span style={{ transform: `rotate(${-132 + (track.mixer.compressor.releaseMs / 500) * 264}deg)` }} />
+                  <input
+                    aria-label="Compressor release"
+                    max={500}
+                    min={20}
+                    onChange={(event) => updateCompressor('releaseMs', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.compressor.releaseMs}
+                  />
+                </span>
+                <strong>Release</strong>
+                <small>{track.mixer.compressor.releaseMs} ms</small>
+              </label>
+              <label className="compressor-knob-control">
+                <span className="compressor-knob">
+                  <span style={{ transform: `rotate(${-132 + ((track.mixer.compressor.makeupGain + 12) / 24) * 264}deg)` }} />
+                  <input
+                    aria-label="Compressor makeup"
+                    max={12}
+                    min={-12}
+                    onChange={(event) => updateCompressor('makeupGain', Number(event.currentTarget.value))}
+                    type="range"
+                    value={track.mixer.compressor.makeupGain}
+                  />
+                </span>
+                <strong>Makeup</strong>
+                <small>{formatDb(track.mixer.compressor.makeupGain)} dB</small>
+              </label>
+            </div>
           </article>
 
           <article className="effect-card eq-card">

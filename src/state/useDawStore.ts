@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type {
   AudioClip,
   AutoPitchSettings,
+  CompressorSettings,
   DelaySettings,
   EqSettings,
   InputChannel,
@@ -54,15 +55,35 @@ const defaultEqBands: EqSettings = {
   high: 0,
 }
 
+const defaultCompressorSettings: CompressorSettings = {
+  enabled: false,
+  threshold: -18,
+  ratio: 3,
+  attackMs: 12,
+  releaseMs: 180,
+  makeupGain: 0,
+}
+
 const defaultMixer: MixerState = {
   muted: false,
   solo: false,
   volume: 72,
   pan: 0,
+  reverbEnabled: true,
   reverb: 18,
   reverbSize: 52,
   reverbTone: 58,
+  reverbDrive: 28,
+  reverbWidth: 62,
+  reverbPreDelay: 48,
+  reverbHpFilter: 180,
+  reverbModEnabled: true,
+  reverbModAmount: 22,
+  reverbEqEnabled: true,
+  reverbEqGain: 0,
+  reverbEqFrequency: 2600,
   delay: defaultDelaySettings,
+  compressor: defaultCompressorSettings,
   eqBands: defaultEqBands,
 }
 
@@ -204,6 +225,10 @@ function normalizeTrack(track: Track): Track {
       delay: {
         ...defaultDelaySettings,
         ...track.mixer.delay,
+      },
+      compressor: {
+        ...defaultCompressorSettings,
+        ...track.mixer.compressor,
       },
       eqBands: {
         ...defaultEqBands,

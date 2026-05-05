@@ -12,13 +12,16 @@ type PlaybackSnapshot = {
 type TrackNodes = {
   input: GainNode
   eqFilters: BiquadFilterNode[]
+  compressor: DynamicsCompressorNode
   dry: GainNode
   delay: DelayNode
   delayFeedback: GainNode
   delayWet: GainNode
   reverbDelay: DelayNode
   reverbFeedback: GainNode
+  reverbHighPass: BiquadFilterNode
   reverbTone: BiquadFilterNode
+  reverbEq: BiquadFilterNode
   reverbWet: GainNode
   pan: StereoPannerNode
   output: GainNode
@@ -63,16 +66,24 @@ function getOutputGain(output: number): number {
   return Math.pow(10, clamp(output, -18, 18) / 20)
 }
 
+function getMakeupGain(makeupGain: number): number {
+  return Math.pow(10, clamp(makeupGain, -12, 12) / 20)
+}
+
 function getReverbFeedbackGain(size: number): number {
   return 0.18 + clamp(size / 100, 0, 1) * 0.42
 }
 
-function getReverbDelayTime(size: number): number {
-  return 0.045 + clamp(size / 100, 0, 1) * 0.18
+function getReverbDelayTime(size: number, preDelay: number): number {
+  return clamp(preDelay / 1000 + 0.035 + clamp(size / 100, 0, 1) * 0.12, 0.01, 0.38)
 }
 
 function getReverbToneFrequency(tone: number): number {
   return 900 + clamp(tone / 100, 0, 1) * 7600
+}
+
+function getReverbDriveGain(drive: number): number {
+  return 1 + clamp(drive / 100, 0, 1) * 0.35
 }
 
 class PlaybackEngine {
@@ -164,10 +175,27 @@ class PlaybackEngine {
 
       const isAudible = getTrackIsAudible(track, tracks)
       nodes.output.gain.setTargetAtTime(
-        isAudible ? getVolumeGain(track.mixer.volume) * getOutputGain(track.mixer.delay.output) : 0,
+        isAudible
+          ? getVolumeGain(track.mixer.volume) *
+            getOutputGain(track.mixer.delay.output) *
+            getMakeupGain(track.mixer.compressor.makeupGain)
+          : 0,
         this.getContext().currentTime,
         0.01,
       )
+      nodes.compressor.threshold.setTargetAtTime(
+        track.mixer.compressor.enabled ? track.mixer.compressor.threshold : 0,
+        this.getContext().currentTime,
+        0.02,
+      )
+      nodes.compressor.ratio.setTargetAtTime(
+        track.mixer.compressor.enabled ? track.mixer.compressor.ratio : 1,
+        this.getContext().currentTime,
+        0.02,
+      )
+      nodes.compressor.knee.setTargetAtTime(track.mixer.compressor.enabled ? 18 : 0, this.getContext().currentTime, 0.02)
+      nodes.compressor.attack.setTargetAtTime(track.mixer.compressor.attackMs / 1000, this.getContext().currentTime, 0.02)
+      nodes.compressor.release.setTargetAtTime(track.mixer.compressor.releaseMs / 1000, this.getContext().currentTime, 0.02)
       nodes.pan.pan.setTargetAtTime(getPanValue(track.mixer.pan), this.getContext().currentTime, 0.01)
       nodes.dry.gain.setTargetAtTime(1, this.getContext().currentTime, 0.02)
       nodes.delay.delayTime.setTargetAtTime(track.mixer.delay.timeMs / 1000, this.getContext().currentTime, 0.02)
@@ -182,12 +210,18 @@ class PlaybackEngine {
         0.02,
       )
       nodes.reverbDelay.delayTime.setTargetAtTime(
-        getReverbDelayTime(track.mixer.reverbSize),
+        getReverbDelayTime(track.mixer.reverbSize, track.mixer.reverbPreDelay),
         this.getContext().currentTime,
         0.02,
       )
       nodes.reverbFeedback.gain.setTargetAtTime(
-        getReverbFeedbackGain(track.mixer.reverbSize),
+        getReverbFeedbackGain(track.mixer.reverbSize) +
+          (track.mixer.reverbModEnabled ? clamp(track.mixer.reverbModAmount / 100, 0, 1) * 0.08 : 0),
+        this.getContext().currentTime,
+        0.02,
+      )
+      nodes.reverbHighPass.frequency.setTargetAtTime(
+        track.mixer.reverbHpFilter,
         this.getContext().currentTime,
         0.02,
       )
@@ -196,7 +230,17 @@ class PlaybackEngine {
         this.getContext().currentTime,
         0.02,
       )
-      nodes.reverbWet.gain.setTargetAtTime(getReverbWetGain(track.mixer.reverb), this.getContext().currentTime, 0.02)
+      nodes.reverbEq.frequency.setTargetAtTime(track.mixer.reverbEqFrequency, this.getContext().currentTime, 0.02)
+      nodes.reverbEq.gain.setTargetAtTime(
+        track.mixer.reverbEqEnabled ? track.mixer.reverbEqGain : 0,
+        this.getContext().currentTime,
+        0.02,
+      )
+      nodes.reverbWet.gain.setTargetAtTime(
+        track.mixer.reverbEnabled ? getReverbWetGain(track.mixer.reverb) * getReverbDriveGain(track.mixer.reverbDrive) : 0,
+        this.getContext().currentTime,
+        0.02,
+      )
       nodes.eqFilters[0]?.gain.setTargetAtTime(track.mixer.eqBands.low, this.getContext().currentTime, 0.02)
       nodes.eqFilters[1]?.gain.setTargetAtTime(track.mixer.eqBands.lowMid, this.getContext().currentTime, 0.02)
       nodes.eqFilters[2]?.gain.setTargetAtTime(track.mixer.eqBands.mid, this.getContext().currentTime, 0.02)
@@ -304,13 +348,16 @@ class PlaybackEngine {
         context.createBiquadFilter(),
         context.createBiquadFilter(),
       ]
+      const compressor = context.createDynamicsCompressor()
       const dry = context.createGain()
       const delay = context.createDelay(1)
       const delayFeedback = context.createGain()
       const delayWet = context.createGain()
       const reverbDelay = context.createDelay(0.4)
       const reverbFeedback = context.createGain()
+      const reverbHighPass = context.createBiquadFilter()
       const reverbTone = context.createBiquadFilter()
+      const reverbEq = context.createBiquadFilter()
       const reverbWet = context.createGain()
       const pan = context.createStereoPanner()
       const output = context.createGain()
@@ -334,14 +381,27 @@ class PlaybackEngine {
       eqFilters[2].gain.value = track.mixer.eqBands.mid
       eqFilters[3].gain.value = track.mixer.eqBands.highMid
       eqFilters[4].gain.value = track.mixer.eqBands.high
+      compressor.threshold.value = track.mixer.compressor.enabled ? track.mixer.compressor.threshold : 0
+      compressor.ratio.value = track.mixer.compressor.enabled ? track.mixer.compressor.ratio : 1
+      compressor.knee.value = track.mixer.compressor.enabled ? 18 : 0
+      compressor.attack.value = track.mixer.compressor.attackMs / 1000
+      compressor.release.value = track.mixer.compressor.releaseMs / 1000
       delay.delayTime.value = track.mixer.delay.timeMs / 1000
       delayFeedback.gain.value = track.mixer.delay.enabled ? getDelayFeedbackGain(track.mixer.delay.feedback) : 0
       delayWet.gain.value = track.mixer.delay.enabled ? getDelayMixGain(track.mixer.delay.mix) : 0
-      reverbDelay.delayTime.value = getReverbDelayTime(track.mixer.reverbSize)
+      reverbDelay.delayTime.value = getReverbDelayTime(track.mixer.reverbSize, track.mixer.reverbPreDelay)
       reverbFeedback.gain.value = getReverbFeedbackGain(track.mixer.reverbSize)
+      reverbHighPass.type = 'highpass'
+      reverbHighPass.frequency.value = track.mixer.reverbHpFilter
       reverbTone.type = 'lowpass'
       reverbTone.frequency.value = getReverbToneFrequency(track.mixer.reverbTone)
-      reverbWet.gain.value = getReverbWetGain(track.mixer.reverb)
+      reverbEq.type = 'peaking'
+      reverbEq.frequency.value = track.mixer.reverbEqFrequency
+      reverbEq.Q.value = 0.8
+      reverbEq.gain.value = track.mixer.reverbEqEnabled ? track.mixer.reverbEqGain : 0
+      reverbWet.gain.value = track.mixer.reverbEnabled
+        ? getReverbWetGain(track.mixer.reverb) * getReverbDriveGain(track.mixer.reverbDrive)
+        : 0
       dry.gain.value = 1
       pan.pan.value = getPanValue(track.mixer.pan)
       output.gain.value = getVolumeGain(track.mixer.volume)
@@ -351,18 +411,21 @@ class PlaybackEngine {
       eqFilters[1].connect(eqFilters[2])
       eqFilters[2].connect(eqFilters[3])
       eqFilters[3].connect(eqFilters[4])
-      eqFilters[4].connect(dry)
+      eqFilters[4].connect(compressor)
+      compressor.connect(dry)
       dry.connect(pan)
-      eqFilters[4].connect(delay)
+      compressor.connect(delay)
       delay.connect(delayFeedback)
       delayFeedback.connect(delay)
       delay.connect(delayWet)
       delayWet.connect(pan)
-      eqFilters[4].connect(reverbDelay)
+      compressor.connect(reverbHighPass)
+      reverbHighPass.connect(reverbDelay)
       reverbDelay.connect(reverbFeedback)
       reverbFeedback.connect(reverbDelay)
       reverbDelay.connect(reverbTone)
-      reverbTone.connect(reverbWet)
+      reverbTone.connect(reverbEq)
+      reverbEq.connect(reverbWet)
       reverbWet.connect(pan)
       pan.connect(output)
       output.connect(context.destination)
@@ -370,13 +433,16 @@ class PlaybackEngine {
       this.trackNodes.set(track.id, {
         input,
         eqFilters,
+        compressor,
         dry,
         delay,
         delayFeedback,
         delayWet,
         reverbDelay,
         reverbFeedback,
+        reverbHighPass,
         reverbTone,
+        reverbEq,
         reverbWet,
         pan,
         output,

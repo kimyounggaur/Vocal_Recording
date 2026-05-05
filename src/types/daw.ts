@@ -53,6 +53,15 @@ export type DelaySettings = {
   analog: number
 }
 
+export type CompressorSettings = {
+  enabled: boolean
+  threshold: number
+  ratio: number
+  attackMs: number
+  releaseMs: number
+  makeupGain: number
+}
+
 export type EqSettings = Record<EqBand, number>
 
 export type TransportState = {
@@ -67,10 +76,21 @@ export type MixerState = {
   solo: boolean
   volume: number
   pan: number
+  reverbEnabled: boolean
   reverb: number
   reverbSize: number
   reverbTone: number
+  reverbDrive: number
+  reverbWidth: number
+  reverbPreDelay: number
+  reverbHpFilter: number
+  reverbModEnabled: boolean
+  reverbModAmount: number
+  reverbEqEnabled: boolean
+  reverbEqGain: number
+  reverbEqFrequency: number
   delay: DelaySettings
+  compressor: CompressorSettings
   eqBands: EqSettings
 }
 
