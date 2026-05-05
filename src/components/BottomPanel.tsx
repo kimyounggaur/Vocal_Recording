@@ -94,6 +94,7 @@ export function BottomPanel({
   onUpdateMixer,
 }: BottomPanelProps) {
   const pitchAmountLabel = getPitchAmountLabel(autoPitch.amount)
+  const isRecordingActive = recording.status === 'arming' || recording.status === 'recording'
 
   return (
     <section className="bottom-panel" aria-label="Voice and audio controls">
@@ -127,6 +128,7 @@ export function BottomPanel({
           <label className="select-field">
             <span>Device</span>
             <select
+              disabled={isRecordingActive}
               onChange={(event) => onSetInputDevice(event.currentTarget.value)}
               value={selectedInputDeviceId}
             >
@@ -142,6 +144,7 @@ export function BottomPanel({
           <label className="select-field">
             <span>Channel</span>
             <select
+              disabled={isRecordingActive}
               onChange={(event) => onSetInputChannel(event.currentTarget.value)}
               value={selectedInputChannelId}
             >
@@ -226,9 +229,9 @@ export function BottomPanel({
             </div>
 
             <label className="pitch-amount">
-                <span className="large-knob">
-                  <span style={{ transform: `rotate(${-132 + (autoPitch.amount / 100) * 264}deg)` }} />
-                  <input
+              <span className="large-knob">
+                <span style={{ transform: `rotate(${-132 + (autoPitch.amount / 100) * 264}deg)` }} />
+                <input
                   aria-label="Pitch assist amount"
                   className="large-knob-input"
                   max={100}
@@ -236,8 +239,8 @@ export function BottomPanel({
                   onChange={(event) => onUpdateAutoPitch('amount', Number(event.currentTarget.value))}
                   type="range"
                   value={autoPitch.amount}
-                  />
-                </span>
+                />
+              </span>
               <span className="amount-scale" aria-hidden="true">
                 <small>Light</small>
                 <small>Heavy</small>

@@ -62,6 +62,7 @@ export function TopBar({
   const [beats, noteValue] = project.timeSignature
   const isRecordingBusy = recordingStatus === 'arming' || recordingStatus === 'encoding'
   const isTransportLocked = transport.isRecording || isRecordingBusy
+  const isSaveDisabled = persistence.isSaving || persistence.isRestoring || isTransportLocked
 
   return (
     <header className="topbar">
@@ -86,10 +87,12 @@ export function TopBar({
       <section className="save-cluster" aria-label="Save status">
         <span className="save-state">
           <small>Last Saved</small>
-          <strong>{persistence.isRestoring ? 'Restoring...' : persistence.isSaving ? 'Saving...' : project.lastSaved}</strong>
+          <strong>
+            {persistence.isRestoring ? 'Restoring...' : persistence.isSaving ? 'Saving...' : project.lastSaved}
+          </strong>
           {persistence.errorMessage ? <em>{persistence.errorMessage}</em> : null}
         </span>
-        <button className="primary-pill" disabled={persistence.isSaving || persistence.isRestoring} onClick={onSave}>
+        <button className="primary-pill" disabled={isSaveDisabled} onClick={onSave}>
           <Save size={17} />
           Save
         </button>
@@ -149,7 +152,12 @@ export function TopBar({
           <button className="icon-button" aria-label="Play" disabled={isTransportLocked} onClick={onTogglePlay}>
             {transport.isPlaying ? <Pause size={20} /> : <Play size={20} fill="currentColor" />}
           </button>
-          <button className="icon-button" aria-label="Return to start" disabled={isTransportLocked} onClick={onReturnToStart}>
+          <button
+            className="icon-button"
+            aria-label="Return to start"
+            disabled={isTransportLocked}
+            onClick={onReturnToStart}
+          >
             <SkipBack size={20} />
           </button>
           <button

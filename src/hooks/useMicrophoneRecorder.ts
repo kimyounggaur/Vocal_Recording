@@ -99,8 +99,12 @@ export function useMicrophoneRecorder(): RecorderControls {
       return
     }
 
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    setInputDevices(mapAudioInputs(devices))
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      setInputDevices(mapAudioInputs(devices))
+    } catch {
+      setInputDevices([])
+    }
   }, [setInputDevices])
 
   const stopMeter = useCallback(() => {
@@ -429,7 +433,8 @@ export function useMicrophoneRecorder(): RecorderControls {
   useEffect(() => {
     if (isMonitoring) {
       void requestInputStream()
-      void connectMonitorOutput()
+        .then(() => connectMonitorOutput())
+        .catch(() => undefined)
       return
     }
 
@@ -453,7 +458,7 @@ export function useMicrophoneRecorder(): RecorderControls {
 
     if (isMonitoring) {
       stopStream()
-      void requestInputStream()
+      void requestInputStream().catch(() => undefined)
       return
     }
 

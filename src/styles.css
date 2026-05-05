@@ -26,9 +26,9 @@
 
 body {
   margin: 0;
-  min-width: 1120px;
+  min-width: 0;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: auto;
   background: var(--bg);
   color: var(--text);
 }
@@ -47,6 +47,13 @@ button {
 
 button:disabled {
   cursor: not-allowed;
+  opacity: 0.48;
+}
+
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 select {
@@ -59,8 +66,9 @@ select {
 .daw-shell {
   display: grid;
   grid-template-rows: 108px minmax(360px, 1fr) 392px;
-  width: 100vw;
+  width: max(100vw, 1120px);
   height: 100vh;
+  min-height: 760px;
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 36%),
@@ -550,9 +558,17 @@ select {
 
 .timeline-status {
   display: flex;
+  min-width: 0;
   gap: 14px;
   color: var(--quiet);
   font-size: 12px;
+}
+
+.timeline-status span,
+.timeline-status strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .timeline-status strong {
@@ -789,7 +805,14 @@ select {
 
 .panel-title {
   gap: 10px;
+  min-width: 0;
   padding-left: 12px;
+}
+
+.panel-title strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .close-panel {
@@ -815,6 +838,7 @@ select {
   background: #22282e;
   color: var(--muted);
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .panel-tabs button.is-active {
@@ -829,6 +853,10 @@ select {
   align-items: center;
   min-height: 0;
   padding: 16px 12px 22px;
+}
+
+.panel-content > * {
+  min-width: 0;
 }
 
 .input-section {
@@ -862,7 +890,9 @@ select {
 .select-field select {
   width: 100%;
   padding: 0 38px 0 14px;
+  overflow: hidden;
   font-weight: 800;
+  text-overflow: ellipsis;
 }
 
 .select-field svg {
@@ -1149,7 +1179,11 @@ select {
 
 .vertical-fader strong,
 .knob-control strong {
+  max-width: 82px;
+  overflow: hidden;
   font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .knob-row {
@@ -1213,12 +1247,37 @@ select {
 }
 
 @media (max-width: 1279px) {
-  body {
-    overflow: auto;
+  .daw-shell {
+    grid-template-rows: 108px minmax(320px, 1fr) 420px;
+    width: 1120px;
+    min-height: 820px;
   }
 
+  .topbar {
+    grid-template-columns: 250px 1fr 250px;
+  }
+
+  .toolbar-row {
+    gap: 8px;
+  }
+
+  .workspace-grid {
+    grid-template-columns: 250px minmax(780px, 1fr);
+  }
+
+  .panel-content {
+    grid-template-columns: 260px minmax(520px, 1fr) 210px;
+    gap: 18px;
+  }
+
+  .mastering-chip,
+  .master-volume {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
   .daw-shell {
-    width: 1280px;
-    min-height: 820px;
+    width: 1040px;
   }
 }

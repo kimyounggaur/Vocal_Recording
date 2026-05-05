@@ -190,8 +190,8 @@ export const useDawStore = create<DawState>((set, get) => ({
     set(({ transport }) => ({
       transport: {
         ...transport,
-        isPlaying: !transport.isPlaying,
-        isRecording: transport.isPlaying ? false : transport.isRecording,
+        isPlaying: transport.isRecording ? transport.isPlaying : !transport.isPlaying,
+        isRecording: transport.isRecording ? true : false,
       },
     })),
   toggleRecord: () =>
@@ -297,7 +297,9 @@ export const useDawStore = create<DawState>((set, get) => ({
     }),
   setProjectBpm: (bpm) =>
     set(({ project, transport }) => {
-      const nextBpm = Math.round(clamp(bpm, MIN_BPM, MAX_BPM))
+      const nextBpm = Number.isFinite(bpm)
+        ? Math.round(clamp(bpm, MIN_BPM, MAX_BPM))
+        : project.bpm
 
       return {
         project: {
@@ -392,7 +394,10 @@ export const useDawStore = create<DawState>((set, get) => ({
         persistedProject.clips.map(async (clip) => [clip.blobId, await loadAudioBlob(clip.blobId)] as const),
       )
       const nextAudioBlobs: Record<string, Blob> = {}
-      const nextClips: AudioClip[] = persistedProject.clips.map((clip) => {
+      const nextTracks = persistedProject.tracks.length > 0 ? persistedProject.tracks : [defaultTrack]
+      const nextClips: AudioClip[] = persistedProject.clips
+        .filter((clip) => nextTracks.some((track) => track.id === clip.trackId))
+        .map((clip) => {
         const blob = blobEntries.find(([blobId]) => blobId === clip.blobId)?.[1]
 
         if (!blob) {
@@ -411,14 +416,20 @@ export const useDawStore = create<DawState>((set, get) => ({
           missingAudio: false,
         }
       })
+      const nextSelectedTrackId = nextTracks.some((track) => track.id === persistedProject.selectedTrackId)
+        ? persistedProject.selectedTrackId
+        : nextTracks[0].id
+      const nextSelectedClipId = nextClips.some((clip) => clip.id === persistedProject.selectedClipId)
+        ? persistedProject.selectedClipId
+        : null
 
       set(({ persistence, transport }) => ({
         project: persistedProject.project,
-        tracks: persistedProject.tracks,
+        tracks: nextTracks,
         clips: nextClips,
         audioBlobs: nextAudioBlobs,
-        selectedTrackId: persistedProject.selectedTrackId,
-        selectedClipId: persistedProject.selectedClipId,
+        selectedTrackId: nextSelectedTrackId,
+        selectedClipId: nextSelectedClipId,
         autopitch: persistedProject.autopitch,
         timeline: persistedProject.timeline,
         transport: {
