@@ -21,6 +21,7 @@ export default function App() {
   const selectedInputChannelId = useDawStore((state) => state.selectedInputChannelId)
   const isMonitoring = useDawStore((state) => state.isMonitoring)
   const recording = useDawStore((state) => state.recording)
+  const persistence = useDawStore((state) => state.persistence)
   const timeline = useDawStore((state) => state.timeline)
   const selectTrack = useDawStore((state) => state.selectTrack)
   const selectClip = useDawStore((state) => state.selectClip)
@@ -32,6 +33,7 @@ export default function App() {
   const setProjectBpm = useDawStore((state) => state.setProjectBpm)
   const setProjectKey = useDawStore((state) => state.setProjectKey)
   const saveProject = useDawStore((state) => state.saveProject)
+  const restoreLastProject = useDawStore((state) => state.restoreLastProject)
   const updateTrackMixer = useDawStore((state) => state.updateTrackMixer)
   const toggleTrackMute = useDawStore((state) => state.toggleTrackMute)
   const toggleTrackSolo = useDawStore((state) => state.toggleTrackSolo)
@@ -51,6 +53,10 @@ export default function App() {
   const selectedTrack = tracks.find((track) => track.id === selectedTrackId) ?? tracks[0]
   const recorder = useMicrophoneRecorder()
   usePlaybackEngine()
+
+  useEffect(() => {
+    void restoreLastProject()
+  }, [restoreLastProject])
 
   const handleStop = () => {
     if (transport.isRecording) {
@@ -93,6 +99,7 @@ export default function App() {
         onStop={handleStop}
         onTogglePlay={togglePlay}
         onToggleRecord={recorder.toggleRecording}
+        persistence={persistence}
         project={project}
         recordingStatus={recording.status}
         transport={transport}

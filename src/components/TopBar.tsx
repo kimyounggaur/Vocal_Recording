@@ -15,7 +15,7 @@ import {
   Square,
   Volume2,
 } from 'lucide-react'
-import type { Project, ProjectKey, TransportState } from '../types/daw'
+import type { PersistenceState, Project, ProjectKey, TransportState } from '../types/daw'
 import type { RecordingStatus } from '../types/daw'
 import { formatTransportTime, MAX_BPM, MIN_BPM } from '../utils/time'
 
@@ -23,6 +23,7 @@ type TopBarProps = {
   project: Project
   transport: TransportState
   recordingStatus: RecordingStatus
+  persistence: PersistenceState
   onTogglePlay: () => void
   onToggleRecord: () => void | Promise<void>
   onStop: () => void
@@ -49,6 +50,7 @@ export function TopBar({
   project,
   transport,
   recordingStatus,
+  persistence,
   onTogglePlay,
   onToggleRecord,
   onStop,
@@ -84,9 +86,10 @@ export function TopBar({
       <section className="save-cluster" aria-label="Save status">
         <span className="save-state">
           <small>Last Saved</small>
-          <strong>{project.lastSaved}</strong>
+          <strong>{persistence.isRestoring ? 'Restoring...' : persistence.isSaving ? 'Saving...' : project.lastSaved}</strong>
+          {persistence.errorMessage ? <em>{persistence.errorMessage}</em> : null}
         </span>
-        <button className="primary-pill" onClick={onSave}>
+        <button className="primary-pill" disabled={persistence.isSaving || persistence.isRestoring} onClick={onSave}>
           <Save size={17} />
           Save
         </button>

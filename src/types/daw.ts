@@ -73,6 +73,7 @@ export type AudioClip = {
   objectUrl: string
   mimeType: string
   createdAt: string
+  missingAudio?: boolean
 }
 
 export type Project = {
@@ -111,5 +112,11 @@ export type RecordingState = {
   permission: RecordingPermissionState
   status: RecordingStatus
   inputLevel: number
+  errorMessage: string | null
+}
+
+export type PersistenceState = {
+  isSaving: boolean
+  isRestoring: boolean
   errorMessage: string | null
 }

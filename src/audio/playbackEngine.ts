@@ -165,7 +165,7 @@ class PlaybackEngine {
     const blob = snapshot.audioBlobs[clip.blobId]
     const track = snapshot.tracks.find((item) => item.id === clip.trackId)
 
-    if (!blob || !track) {
+    if (clip.missingAudio || !blob || !track) {
       return
     }
 

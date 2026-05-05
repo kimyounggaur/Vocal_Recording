@@ -5,6 +5,7 @@ import type {
   InputChannel,
   InputDevice,
   MixerState,
+  PersistenceState,
   PitchKey,
   Project,
   ProjectKey,
@@ -15,6 +16,14 @@ import type {
   Track,
   TransportState,
 } from '../types/daw'
+import {
+  deleteAudioBlob,
+  loadAudioBlob,
+  loadProjectJson,
+  saveAudioBlobs,
+  saveProjectJson,
+  toPersistedClip,
+} from '../storage/projectStorage'
 import { beatToSeconds, clamp, MAX_BPM, MIN_BPM, secondsToBeat, snapBeatToGrid } from '../utils/time'
 
 type MixerKey = keyof MixerState
@@ -35,6 +44,7 @@ type DawState = {
   selectedInputChannelId: string
   isMonitoring: boolean
   recording: RecordingState
+  persistence: PersistenceState
   timeline: TimelineState
   selectTrack: (trackId: string) => void
   selectClip: (clipId: string | null) => void
@@ -50,7 +60,8 @@ type DawState = {
   advanceTransport: (deltaSeconds: number) => void
   setProjectBpm: (bpm: number) => void
   setProjectKey: (key: ProjectKey) => void
-  saveProject: () => void
+  saveProject: () => Promise<void>
+  restoreLastProject: () => Promise<void>
   updateTrackMixer: <K extends MixerKey>(trackId: string, key: K, value: MixerState[K]) => void
   toggleTrackMute: (trackId: string) => void
   toggleTrackSolo: (trackId: string) => void
@@ -140,6 +151,12 @@ const initialRecording: RecordingState = {
   errorMessage: null,
 }
 
+const initialPersistence: PersistenceState = {
+  isSaving: false,
+  isRestoring: false,
+  errorMessage: null,
+}
+
 function formatSaveTime(date: Date): string {
   return date.toLocaleTimeString('ko-KR', {
     hour: '2-digit',
@@ -162,6 +179,7 @@ export const useDawStore = create<DawState>((set, get) => ({
   selectedInputChannelId: inputChannels[0].id,
   isMonitoring: false,
   recording: initialRecording,
+  persistence: initialPersistence,
   timeline: {
     pixelsPerBeat: 24,
     snapToGrid: true,
@@ -299,13 +317,133 @@ export const useDawStore = create<DawState>((set, get) => ({
         key,
       },
     })),
-  saveProject: () =>
-    set(({ project }) => ({
-      project: {
-        ...project,
-        lastSaved: formatSaveTime(new Date()),
+  saveProject: async () => {
+    const savedAt = new Date()
+
+    set(({ persistence }) => ({
+      persistence: {
+        ...persistence,
+        isSaving: true,
+        errorMessage: null,
       },
-    })),
+    }))
+
+    try {
+      const state = get()
+      const project = {
+        ...state.project,
+        lastSaved: formatSaveTime(savedAt),
+      }
+
+      await saveAudioBlobs(state.audioBlobs)
+      saveProjectJson({
+        version: 1,
+        savedAt: savedAt.toISOString(),
+        project,
+        tracks: state.tracks,
+        clips: state.clips.map(toPersistedClip),
+        autopitch: state.autopitch,
+        timeline: state.timeline,
+        selectedTrackId: state.selectedTrackId,
+        selectedClipId: state.selectedClipId,
+      })
+
+      set(({ persistence }) => ({
+        project,
+        persistence: {
+          ...persistence,
+          isSaving: false,
+          errorMessage: null,
+        },
+      }))
+    } catch {
+      set(({ persistence }) => ({
+        persistence: {
+          ...persistence,
+          isSaving: false,
+          errorMessage: 'Project could not be saved.',
+        },
+      }))
+    }
+  },
+  restoreLastProject: async () => {
+    set(({ persistence }) => ({
+      persistence: {
+        ...persistence,
+        isRestoring: true,
+        errorMessage: null,
+      },
+    }))
+
+    try {
+      const persistedProject = loadProjectJson()
+
+      if (!persistedProject) {
+        set(({ persistence }) => ({
+          persistence: {
+            ...persistence,
+            isRestoring: false,
+          },
+        }))
+        return
+      }
+
+      const blobEntries = await Promise.all(
+        persistedProject.clips.map(async (clip) => [clip.blobId, await loadAudioBlob(clip.blobId)] as const),
+      )
+      const nextAudioBlobs: Record<string, Blob> = {}
+      const nextClips: AudioClip[] = persistedProject.clips.map((clip) => {
+        const blob = blobEntries.find(([blobId]) => blobId === clip.blobId)?.[1]
+
+        if (!blob) {
+          return {
+            ...clip,
+            objectUrl: '',
+            missingAudio: true,
+          }
+        }
+
+        nextAudioBlobs[clip.blobId] = blob
+
+        return {
+          ...clip,
+          objectUrl: URL.createObjectURL(blob),
+          missingAudio: false,
+        }
+      })
+
+      set(({ persistence, transport }) => ({
+        project: persistedProject.project,
+        tracks: persistedProject.tracks,
+        clips: nextClips,
+        audioBlobs: nextAudioBlobs,
+        selectedTrackId: persistedProject.selectedTrackId,
+        selectedClipId: persistedProject.selectedClipId,
+        autopitch: persistedProject.autopitch,
+        timeline: persistedProject.timeline,
+        transport: {
+          ...transport,
+          isPlaying: false,
+          isRecording: false,
+          currentBeat: 0,
+          currentTimeSeconds: 0,
+        },
+        persistence: {
+          ...persistence,
+          isRestoring: false,
+          errorMessage: null,
+        },
+      }))
+    } catch {
+      set(({ persistence }) => ({
+        persistence: {
+          ...persistence,
+          isRestoring: false,
+          errorMessage: 'Last project could not be restored.',
+        },
+      }))
+    }
+  },
   updateTrackMixer: (trackId, key, value) =>
     set(({ tracks }) => ({
       tracks: tracks.map((track) =>
@@ -425,8 +563,11 @@ export const useDawStore = create<DawState>((set, get) => ({
       const nextAudioBlobs = { ...audioBlobs }
 
       if (clip) {
-        URL.revokeObjectURL(clip.objectUrl)
+        if (clip.objectUrl) {
+          URL.revokeObjectURL(clip.objectUrl)
+        }
         delete nextAudioBlobs[clip.blobId]
+        void deleteAudioBlob(clip.blobId)
       }
 
       return {

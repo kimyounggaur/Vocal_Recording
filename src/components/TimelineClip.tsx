@@ -32,7 +32,11 @@ export function TimelineClip({
 
   return (
     <button
-      className={isSelected ? 'audio-clip is-selected' : 'audio-clip'}
+      className={[
+        'audio-clip',
+        isSelected ? 'is-selected' : '',
+        clip.missingAudio ? 'is-missing' : '',
+      ].filter(Boolean).join(' ')}
       onClick={(event) => {
         event.stopPropagation()
         onSelect(clip.id)
@@ -52,8 +56,12 @@ export function TimelineClip({
         className="clip-trim-handle is-right"
         onPointerDown={handlePointerDown('trim-end')}
       />
-      <span className="clip-name">{clip.name}</span>
-      <WaveformCanvas peaks={clip.waveformPeaks} redrawKey={`${width}-${pixelsPerBeat}`} />
+      <span className="clip-name">{clip.missingAudio ? `${clip.name} missing audio` : clip.name}</span>
+      <WaveformCanvas
+        color={clip.missingAudio ? '#ffb8af' : '#8af8e2'}
+        peaks={clip.waveformPeaks}
+        redrawKey={`${width}-${pixelsPerBeat}-${clip.missingAudio ? 'missing' : 'ready'}`}
+      />
       <span className="clip-meta">
         {pixelsToBeat(width, pixelsPerBeat).toFixed(1)} beats
       </span>
