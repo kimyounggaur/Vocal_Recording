@@ -2,10 +2,14 @@ import { create } from 'zustand'
 import type {
   AudioClip,
   AutoPitchSettings,
+  InputChannel,
   InputDevice,
   MixerState,
   Project,
   ProjectKey,
+  RecordingPermissionState,
+  RecordingState,
+  RecordingStatus,
   TimelineState,
   Track,
   TransportState,
@@ -20,16 +24,21 @@ type DawState = {
   transport: TransportState
   tracks: Track[]
   clips: AudioClip[]
+  audioBlobs: Record<string, Blob>
   selectedTrackId: string
   autopitch: AutoPitchSettings
   inputDevices: InputDevice[]
+  inputChannels: InputChannel[]
   selectedInputDeviceId: string
   selectedInputChannelId: string
   isMonitoring: boolean
+  recording: RecordingState
   timeline: TimelineState
   selectTrack: (trackId: string) => void
   togglePlay: () => void
   toggleRecord: () => void
+  startRecordingTransport: () => void
+  finishRecordingTransport: () => void
   stopTransport: () => void
   returnToStart: () => void
   seekToBeat: (beat: number) => void
@@ -43,9 +52,16 @@ type DawState = {
   updateAutoPitch: <K extends AutoPitchKey>(key: K, value: AutoPitchSettings[K]) => void
   toggleAutoPitch: () => void
   detectProjectKey: () => void
+  addRecordedClip: (clip: AudioClip, blob: Blob) => void
+  setInputDevices: (devices: InputDevice[]) => void
   setInputDevice: (deviceId: string) => void
   setInputChannel: (channelId: string) => void
+  setMonitoring: (enabled: boolean) => void
   toggleMonitoring: () => void
+  setRecordingPermission: (permission: RecordingPermissionState) => void
+  setRecordingStatus: (status: RecordingStatus) => void
+  setRecordingError: (message: string | null) => void
+  setInputLevel: (level: number) => void
   toggleSnapToGrid: () => void
   zoomTimeline: (direction: 'in' | 'out') => void
 }
@@ -70,9 +86,16 @@ const inputDevices: InputDevice[] = [
     id: 'default',
     label: 'Default - Microphone input',
   },
+]
+
+const inputChannels: InputChannel[] = [
   {
-    id: 'channel-1',
+    id: 'mono',
     label: 'Channel 1',
+  },
+  {
+    id: 'stereo',
+    label: 'Stereo input',
   },
 ]
 
@@ -100,6 +123,13 @@ const initialAutoPitch: AutoPitchSettings = {
   amount: 64,
 }
 
+const initialRecording: RecordingState = {
+  permission: 'idle',
+  status: 'idle',
+  inputLevel: 0,
+  errorMessage: null,
+}
+
 function formatSaveTime(date: Date): string {
   return date.toLocaleTimeString('ko-KR', {
     hour: '2-digit',
@@ -112,12 +142,15 @@ export const useDawStore = create<DawState>((set, get) => ({
   transport: initialTransport,
   tracks: [defaultTrack],
   clips: [],
+  audioBlobs: {},
   selectedTrackId: defaultTrack.id,
   autopitch: initialAutoPitch,
   inputDevices,
+  inputChannels,
   selectedInputDeviceId: inputDevices[0].id,
-  selectedInputChannelId: inputDevices[1].id,
+  selectedInputChannelId: inputChannels[0].id,
   isMonitoring: false,
+  recording: initialRecording,
   timeline: {
     pixelsPerBeat: 24,
     snapToGrid: true,
@@ -143,8 +176,33 @@ export const useDawStore = create<DawState>((set, get) => ({
         },
       }
     }),
-  stopTransport: () =>
+  startRecordingTransport: () =>
+    set(({ recording, transport }) => ({
+      recording: {
+        ...recording,
+        status: 'recording',
+        errorMessage: null,
+      },
+      transport: {
+        ...transport,
+        isPlaying: true,
+        isRecording: true,
+      },
+    })),
+  finishRecordingTransport: () =>
     set(({ transport }) => ({
+      transport: {
+        ...transport,
+        isPlaying: false,
+        isRecording: false,
+      },
+    })),
+  stopTransport: () =>
+    set(({ recording, transport }) => ({
+      recording: {
+        ...recording,
+        status: 'idle',
+      },
       transport: {
         ...transport,
         isPlaying: false,
@@ -269,9 +327,64 @@ export const useDawStore = create<DawState>((set, get) => ({
         scale: project.key.endsWith('Minor') ? 'Minor' : 'Major',
       },
     })),
+  addRecordedClip: (clip, blob) =>
+    set(({ audioBlobs, clips }) => ({
+      audioBlobs: {
+        ...audioBlobs,
+        [clip.blobId]: blob,
+      },
+      clips: [...clips, clip],
+    })),
+  setInputDevices: (devices) =>
+    set(({ selectedInputDeviceId }) => {
+      const nextDevices =
+        devices.length > 0
+          ? devices
+          : [
+              {
+                id: 'default',
+                label: 'Default microphone',
+              },
+            ]
+      const selectedDeviceExists = nextDevices.some((device) => device.id === selectedInputDeviceId)
+
+      return {
+        inputDevices: nextDevices,
+        selectedInputDeviceId: selectedDeviceExists ? selectedInputDeviceId : nextDevices[0].id,
+      }
+    }),
   setInputDevice: (deviceId) => set({ selectedInputDeviceId: deviceId }),
   setInputChannel: (channelId) => set({ selectedInputChannelId: channelId }),
+  setMonitoring: (enabled) => set({ isMonitoring: enabled }),
   toggleMonitoring: () => set(({ isMonitoring }) => ({ isMonitoring: !isMonitoring })),
+  setRecordingPermission: (permission) =>
+    set(({ recording }) => ({
+      recording: {
+        ...recording,
+        permission,
+      },
+    })),
+  setRecordingStatus: (status) =>
+    set(({ recording }) => ({
+      recording: {
+        ...recording,
+        status,
+      },
+    })),
+  setRecordingError: (message) =>
+    set(({ recording }) => ({
+      recording: {
+        ...recording,
+        errorMessage: message,
+      },
+    })),
+  setInputLevel: (level) =>
+    set(({ recording }) => ({
+      recording: {
+        ...recording,
+        inputLevel: clamp(level, 0, 100),
+      },
+    })),
   toggleSnapToGrid: () =>
     set(({ timeline }) => ({
       timeline: {

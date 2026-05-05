@@ -14,6 +14,10 @@ export type ProjectKey =
 
 export type TrackType = 'voice-audio'
 
+export type RecordingPermissionState = 'idle' | 'requesting' | 'granted' | 'denied'
+
+export type RecordingStatus = 'idle' | 'arming' | 'recording' | 'encoding'
+
 export type TransportState = {
   isPlaying: boolean
   isRecording: boolean
@@ -41,12 +45,16 @@ export type Track = {
 export type AudioClip = {
   id: string
   trackId: string
+  blobId: string
   name: string
   startBeat: number
   durationBeats: number
   offsetSeconds: number
   durationSeconds: number
   waveformPeaks: number[]
+  objectUrl: string
+  mimeType: string
+  createdAt: string
 }
 
 export type Project = {
@@ -71,7 +79,19 @@ export type InputDevice = {
   label: string
 }
 
+export type InputChannel = {
+  id: string
+  label: string
+}
+
 export type TimelineState = {
   pixelsPerBeat: number
   snapToGrid: boolean
+}
+
+export type RecordingState = {
+  permission: RecordingPermissionState
+  status: RecordingStatus
+  inputLevel: number
+  errorMessage: string | null
 }

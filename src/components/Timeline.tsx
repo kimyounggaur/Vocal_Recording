@@ -121,11 +121,37 @@ export function Timeline({
 
           <div className="track-lane">
             <div className="record-region" />
-            <div className="drop-zone">
-              <FileAudio size={28} />
-              <strong>Drop a loop or audio file</strong>
-              <span>Recording and waveform clips will appear here in the next stage.</span>
-            </div>
+            {clips.map((clip) => (
+              <button
+                className="audio-clip"
+                key={clip.id}
+                onClick={(event) => event.stopPropagation()}
+                style={{
+                  left: `${beatToPixels(clip.startBeat, pixelsPerBeat)}px`,
+                  width: `${Math.max(80, beatToPixels(clip.durationBeats, pixelsPerBeat))}px`,
+                }}
+                title={`${clip.name} (${clip.durationSeconds.toFixed(1)}s)`}
+              >
+                <span className="clip-name">{clip.name}</span>
+                <span className="waveform">
+                  {clip.waveformPeaks.map((peak, index) => (
+                    <i
+                      key={`${clip.id}-${index}`}
+                      style={{
+                        height: `${Math.max(8, peak * 42)}px`,
+                      }}
+                    />
+                  ))}
+                </span>
+              </button>
+            ))}
+            {clips.length === 0 ? (
+              <div className="drop-zone">
+                <FileAudio size={28} />
+                <strong>Drop a loop or audio file</strong>
+                <span>Recording and waveform clips will appear here in the next stage.</span>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

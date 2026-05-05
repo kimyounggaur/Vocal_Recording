@@ -3,6 +3,7 @@ import { BottomPanel } from './components/BottomPanel'
 import { Sidebar } from './components/Sidebar'
 import { Timeline } from './components/Timeline'
 import { TopBar } from './components/TopBar'
+import { useMicrophoneRecorder } from './hooks/useMicrophoneRecorder'
 import { useDawStore } from './state/useDawStore'
 
 export default function App() {
@@ -13,13 +14,14 @@ export default function App() {
   const selectedTrackId = useDawStore((state) => state.selectedTrackId)
   const autopitch = useDawStore((state) => state.autopitch)
   const inputDevices = useDawStore((state) => state.inputDevices)
+  const inputChannels = useDawStore((state) => state.inputChannels)
   const selectedInputDeviceId = useDawStore((state) => state.selectedInputDeviceId)
   const selectedInputChannelId = useDawStore((state) => state.selectedInputChannelId)
   const isMonitoring = useDawStore((state) => state.isMonitoring)
+  const recording = useDawStore((state) => state.recording)
   const timeline = useDawStore((state) => state.timeline)
   const selectTrack = useDawStore((state) => state.selectTrack)
   const togglePlay = useDawStore((state) => state.togglePlay)
-  const toggleRecord = useDawStore((state) => state.toggleRecord)
   const stopTransport = useDawStore((state) => state.stopTransport)
   const returnToStart = useDawStore((state) => state.returnToStart)
   const seekToBeat = useDawStore((state) => state.seekToBeat)
@@ -40,6 +42,16 @@ export default function App() {
   const zoomTimeline = useDawStore((state) => state.zoomTimeline)
 
   const selectedTrack = tracks.find((track) => track.id === selectedTrackId) ?? tracks[0]
+  const recorder = useMicrophoneRecorder()
+
+  const handleStop = () => {
+    if (transport.isRecording) {
+      recorder.stopRecording()
+      return
+    }
+
+    stopTransport()
+  }
 
   useEffect(() => {
     if (!transport.isPlaying && !transport.isRecording) {
@@ -70,10 +82,11 @@ export default function App() {
         onSave={saveProject}
         onSetBpm={setProjectBpm}
         onSetProjectKey={setProjectKey}
-        onStop={stopTransport}
+        onStop={handleStop}
         onTogglePlay={togglePlay}
-        onToggleRecord={toggleRecord}
+        onToggleRecord={recorder.toggleRecording}
         project={project}
+        recordingStatus={recording.status}
         transport={transport}
       />
       <div className="workspace-grid">
@@ -100,6 +113,7 @@ export default function App() {
       </div>
       <BottomPanel
         autoPitch={autopitch}
+        inputChannels={inputChannels}
         inputDevices={inputDevices}
         isMonitoring={isMonitoring}
         onDetectKey={detectProjectKey}
@@ -109,6 +123,7 @@ export default function App() {
         onToggleMonitoring={toggleMonitoring}
         onUpdateAutoPitch={updateAutoPitch}
         onUpdateMixer={updateTrackMixer}
+        recording={recording}
         selectedInputChannelId={selectedInputChannelId}
         selectedInputDeviceId={selectedInputDeviceId}
         track={selectedTrack}

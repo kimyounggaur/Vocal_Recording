@@ -633,6 +633,55 @@ select {
   font-size: 12px;
 }
 
+.audio-clip {
+  position: absolute;
+  top: 104px;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 22px 1fr;
+  height: 82px;
+  min-width: 80px;
+  overflow: hidden;
+  padding: 7px 8px;
+  border: 1px solid rgba(42, 199, 165, 0.54);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(42, 199, 165, 0.18), rgba(42, 199, 165, 0.07)),
+    #111b1a;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  text-align: left;
+}
+
+.audio-clip:hover {
+  border-color: rgba(42, 199, 165, 0.88);
+}
+
+.clip-name {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.waveform {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.waveform i {
+  display: block;
+  flex: 1 0 2px;
+  min-width: 2px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #b8fff2, var(--accent-2));
+}
+
 .playhead {
   position: absolute;
   top: 0;
@@ -795,6 +844,23 @@ select {
 .monitoring-row button.is-active {
   color: #081210;
   background: var(--accent-2);
+}
+
+.input-alert {
+  min-height: 28px;
+  padding: 8px 10px;
+  border: 1px solid #263039;
+  border-radius: 7px;
+  color: var(--muted);
+  background: #151a1e;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.input-alert.is-error {
+  color: #ffb8af;
+  border-color: rgba(255, 79, 63, 0.48);
+  background: rgba(255, 79, 63, 0.12);
 }
 
 .pitch-card {

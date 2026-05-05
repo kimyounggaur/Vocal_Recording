@@ -11,12 +11,21 @@ import {
   X,
 } from 'lucide-react'
 import { Knob } from './Knob'
-import type { AutoPitchSettings, InputDevice, MixerState, Track } from '../types/daw'
+import type {
+  AutoPitchSettings,
+  InputChannel,
+  InputDevice,
+  MixerState,
+  RecordingState,
+  Track,
+} from '../types/daw'
 
 type BottomPanelProps = {
   autoPitch: AutoPitchSettings
   inputDevices: InputDevice[]
+  inputChannels: InputChannel[]
   isMonitoring: boolean
+  recording: RecordingState
   selectedInputDeviceId: string
   selectedInputChannelId: string
   track: Track
@@ -66,7 +75,9 @@ function getPitchAmountLabel(value: number): string {
 export function BottomPanel({
   autoPitch,
   inputDevices,
+  inputChannels,
   isMonitoring,
+  recording,
   selectedInputDeviceId,
   selectedInputChannelId,
   track,
@@ -130,9 +141,9 @@ export function BottomPanel({
               onChange={(event) => onSetInputChannel(event.currentTarget.value)}
               value={selectedInputChannelId}
             >
-              {inputDevices.map((device) => (
-                <option key={device.id} value={device.id}>
-                  {device.label}
+              {inputChannels.map((channel) => (
+                <option key={channel.id} value={channel.id}>
+                  {channel.label}
                 </option>
               ))}
             </select>
@@ -143,13 +154,24 @@ export function BottomPanel({
             <div>
               <strong>Input Level</strong>
               <span className="input-meter">
-                <i style={{ width: isMonitoring ? '38%' : '18%' }} />
+                <i style={{ width: `${recording.inputLevel}%` }} />
               </span>
             </div>
             <button className={isMonitoring ? 'is-active' : ''} onClick={onToggleMonitoring}>
               <Headphones size={16} />
               Monitoring
             </button>
+          </div>
+
+          <div className={recording.errorMessage ? 'input-alert is-error' : 'input-alert'}>
+            {recording.errorMessage ??
+              (recording.status === 'recording'
+                ? 'Recording'
+                : recording.status === 'encoding'
+                  ? 'Creating waveform'
+                  : recording.permission === 'granted'
+                    ? 'Microphone ready'
+                    : 'Microphone idle')}
           </div>
         </aside>
 

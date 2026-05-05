@@ -16,13 +16,15 @@ import {
   Volume2,
 } from 'lucide-react'
 import type { Project, ProjectKey, TransportState } from '../types/daw'
+import type { RecordingStatus } from '../types/daw'
 import { formatTransportTime, MAX_BPM, MIN_BPM } from '../utils/time'
 
 type TopBarProps = {
   project: Project
   transport: TransportState
+  recordingStatus: RecordingStatus
   onTogglePlay: () => void
-  onToggleRecord: () => void
+  onToggleRecord: () => void | Promise<void>
   onStop: () => void
   onReturnToStart: () => void
   onSave: () => void
@@ -46,6 +48,7 @@ const projectKeys: ProjectKey[] = [
 export function TopBar({
   project,
   transport,
+  recordingStatus,
   onTogglePlay,
   onToggleRecord,
   onStop,
@@ -55,6 +58,8 @@ export function TopBar({
   onSetProjectKey,
 }: TopBarProps) {
   const [beats, noteValue] = project.timeSignature
+  const isRecordingBusy = recordingStatus === 'arming' || recordingStatus === 'encoding'
+  const isTransportLocked = transport.isRecording || isRecordingBusy
 
   return (
     <header className="topbar">
@@ -105,6 +110,7 @@ export function TopBar({
         <label className="tempo-chip tempo-input-chip">
           <input
             aria-label="Project tempo"
+            disabled={isTransportLocked}
             max={MAX_BPM}
             min={MIN_BPM}
             onChange={(event) => onSetBpm(Number(event.currentTarget.value))}
@@ -124,6 +130,7 @@ export function TopBar({
           <KeyRound size={16} />
           <select
             aria-label="Project key"
+            disabled={isTransportLocked}
             onChange={(event) => onSetProjectKey(event.currentTarget.value as ProjectKey)}
             value={project.key}
           >
@@ -136,15 +143,16 @@ export function TopBar({
         </label>
 
         <div className="transport-buttons">
-          <button className="icon-button" aria-label="Play" onClick={onTogglePlay}>
+          <button className="icon-button" aria-label="Play" disabled={isTransportLocked} onClick={onTogglePlay}>
             {transport.isPlaying ? <Pause size={20} /> : <Play size={20} fill="currentColor" />}
           </button>
-          <button className="icon-button" aria-label="Return to start" onClick={onReturnToStart}>
+          <button className="icon-button" aria-label="Return to start" disabled={isTransportLocked} onClick={onReturnToStart}>
             <SkipBack size={20} />
           </button>
           <button
             className={transport.isRecording ? 'record-button is-active' : 'record-button'}
             aria-label="Record"
+            disabled={isRecordingBusy}
             onClick={onToggleRecord}
           >
             <Circle size={18} fill="currentColor" />
