@@ -5,6 +5,7 @@ import type {
   InputChannel,
   InputDevice,
   MixerState,
+  PitchKey,
   Project,
   ProjectKey,
   RecordingPermissionState,
@@ -355,7 +356,7 @@ export const useDawStore = create<DawState>((set, get) => ({
     set(({ autopitch, project }) => ({
       autopitch: {
         ...autopitch,
-        key: project.key.split(' ')[0],
+        key: project.key.split(' ')[0] as PitchKey,
         scale: project.key.endsWith('Minor') ? 'Minor' : 'Major',
       },
     })),

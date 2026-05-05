@@ -1067,6 +1067,20 @@ select {
   opacity: 0;
 }
 
+.amount-scale {
+  display: flex;
+  justify-content: space-between;
+  width: 118px;
+  margin-top: -4px;
+  color: var(--quiet);
+}
+
+.amount-scale small {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .pitch-amount strong {
   color: var(--quiet);
   font-size: 13px;

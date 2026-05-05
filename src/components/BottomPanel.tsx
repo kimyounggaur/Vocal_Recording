@@ -16,6 +16,9 @@ import type {
   InputChannel,
   InputDevice,
   MixerState,
+  PitchCategory,
+  PitchKey,
+  PitchScale,
   RecordingState,
   Track,
 } from '../types/daw'
@@ -45,8 +48,9 @@ type BottomPanelProps = {
   ) => void
 }
 
-const pitchCategories = ['Essentials', 'Pop', 'Rap', 'Natural']
-const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+const pitchCategories: PitchCategory[] = ['Essentials', 'Pop', 'Rap', 'Natural']
+const pitchScales: PitchScale[] = ['Chromatic', 'Major', 'Minor']
+const keys: PitchKey[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
 function getPanLabel(value: number): string {
   if (value === 0) {
@@ -196,7 +200,9 @@ export function BottomPanel({
               <label className="compact-label">
                 Category
                 <select
-                  onChange={(event) => onUpdateAutoPitch('category', event.currentTarget.value)}
+                  onChange={(event) =>
+                    onUpdateAutoPitch('category', event.currentTarget.value as PitchCategory)
+                  }
                   value={autoPitch.category}
                 >
                   {pitchCategories.map((category) => (
@@ -220,9 +226,9 @@ export function BottomPanel({
             </div>
 
             <label className="pitch-amount">
-              <span className="large-knob">
-                <span style={{ transform: `rotate(${-132 + (autoPitch.amount / 100) * 264}deg)` }} />
-                <input
+                <span className="large-knob">
+                  <span style={{ transform: `rotate(${-132 + (autoPitch.amount / 100) * 264}deg)` }} />
+                  <input
                   aria-label="Pitch assist amount"
                   className="large-knob-input"
                   max={100}
@@ -230,7 +236,11 @@ export function BottomPanel({
                   onChange={(event) => onUpdateAutoPitch('amount', Number(event.currentTarget.value))}
                   type="range"
                   value={autoPitch.amount}
-                />
+                  />
+                </span>
+              <span className="amount-scale" aria-hidden="true">
+                <small>Light</small>
+                <small>Heavy</small>
               </span>
               <strong>{pitchAmountLabel}</strong>
             </label>
@@ -239,12 +249,14 @@ export function BottomPanel({
               <label className="compact-label">
                 Scale
                 <select
-                  onChange={(event) => onUpdateAutoPitch('scale', event.currentTarget.value)}
+                  onChange={(event) =>
+                    onUpdateAutoPitch('scale', event.currentTarget.value as PitchScale)
+                  }
                   value={autoPitch.scale}
                 >
-                  <option>Chromatic</option>
-                  <option>Major</option>
-                  <option>Minor</option>
+                  {pitchScales.map((scale) => (
+                    <option key={scale}>{scale}</option>
+                  ))}
                 </select>
               </label>
               <div className="key-grid" aria-label="Key selector">

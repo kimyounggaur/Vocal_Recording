@@ -18,6 +18,24 @@ export type RecordingPermissionState = 'idle' | 'requesting' | 'granted' | 'deni
 
 export type RecordingStatus = 'idle' | 'arming' | 'recording' | 'encoding'
 
+export type PitchCategory = 'Essentials' | 'Pop' | 'Rap' | 'Natural'
+
+export type PitchScale = 'Chromatic' | 'Major' | 'Minor'
+
+export type PitchKey =
+  | 'C'
+  | 'C#'
+  | 'D'
+  | 'D#'
+  | 'E'
+  | 'F'
+  | 'F#'
+  | 'G'
+  | 'G#'
+  | 'A'
+  | 'A#'
+  | 'B'
+
 export type TransportState = {
   isPlaying: boolean
   isRecording: boolean
@@ -68,9 +86,9 @@ export type Project = {
 
 export type AutoPitchSettings = {
   enabled: boolean
-  category: string
-  scale: string
-  key: string
+  category: PitchCategory
+  scale: PitchScale
+  key: PitchKey
   amount: number
 }
 
