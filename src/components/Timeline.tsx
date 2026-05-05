@@ -1,6 +1,6 @@
 import { FileAudio, Magnet, Search, ZoomIn, ZoomOut } from 'lucide-react'
-import { useCallback, useEffect, useRef } from 'react'
-import type { MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ChangeEvent, DragEvent, MouseEvent } from 'react'
 import type { AudioClip, TimeSignature } from '../types/daw'
 import { beatToPixels, getBarNumber, getBeatInBar, getBeatsPerBar, pixelsToBeat } from '../utils/time'
 import { TimelineClip } from './TimelineClip'
@@ -23,6 +23,7 @@ type TimelineProps = {
   onTrimClipStart: (clipId: string, startBeat: number) => void
   onTrimClipEnd: (clipId: string, durationBeats: number) => void
   onDeleteSelectedClip: () => void
+  onImportAudioFiles: (files: File[], startBeat?: number) => void
   onToggleSnap: () => void
   onZoomIn: () => void
   onZoomOut: () => void
@@ -54,12 +55,15 @@ export function Timeline({
   onTrimClipStart,
   onTrimClipEnd,
   onDeleteSelectedClip,
+  onImportAudioFiles,
   onToggleSnap,
   onZoomIn,
   onZoomOut,
 }: TimelineProps) {
   const arrangementRef = useRef<HTMLDivElement | null>(null)
   const editSessionRef = useRef<ClipEditSession | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false)
   const beatsPerBar = getBeatsPerBar(timeSignature)
   const barItems = Array.from({ length: bars }, (_, index) => index + 1)
   const gridColumns = bars * beatsPerBar * subdivisions
@@ -79,6 +83,60 @@ export function Timeline({
     const x = event.clientX - bounds.left
     onClearClipSelection()
     onSeekToBeat(pixelsToBeat(x, pixelsPerBeat))
+  }
+
+  const getDropBeat = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      const bounds = event.currentTarget.getBoundingClientRect()
+      const x = event.clientX - bounds.left
+
+      return pixelsToBeat(x, pixelsPerBeat)
+    },
+    [pixelsPerBeat],
+  )
+
+  const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!event.dataTransfer.types.includes('Files')) {
+      return
+    }
+
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+    setIsDraggingAudio(true)
+  }, [])
+
+  const handleDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    const nextTarget = event.relatedTarget
+
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+      return
+    }
+
+    setIsDraggingAudio(false)
+  }, [])
+
+  const handleDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      if (!event.dataTransfer.files.length) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+      setIsDraggingAudio(false)
+      onImportAudioFiles(Array.from(event.dataTransfer.files), getDropBeat(event))
+    },
+    [getDropBeat, onImportAudioFiles],
+  )
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.currentTarget.files ?? [])
+
+    if (files.length > 0) {
+      onImportAudioFiles(files)
+    }
+
+    event.currentTarget.value = ''
   }
 
   const handleEditStart = useCallback((clip: AudioClip, mode: ClipEditMode, pointerX: number) => {
@@ -166,6 +224,13 @@ export function Timeline({
         </div>
         <div className="timeline-tool-buttons">
           <button
+            className="mini-icon-button"
+            aria-label="Import audio"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <FileAudio size={16} />
+          </button>
+          <button
             className={snapToGrid ? 'mini-icon-button is-active' : 'mini-icon-button'}
             aria-label="Snap to grid"
             onClick={onToggleSnap}
@@ -200,7 +265,10 @@ export function Timeline({
         </div>
 
         <div
-          className="arrangement"
+          className={isDraggingAudio ? 'arrangement is-dragging-audio' : 'arrangement'}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
           onClick={handleSeek}
           ref={arrangementRef}
           style={{
@@ -226,6 +294,13 @@ export function Timeline({
 
           <div className="track-lane">
             <div className="record-region" />
+            <input
+              accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm,.flac"
+              className="visually-hidden"
+              onChange={handleFileSelect}
+              ref={fileInputRef}
+              type="file"
+            />
             {clips.map((clip) => (
               <TimelineClip
                 clip={clip}
@@ -240,7 +315,10 @@ export function Timeline({
               <div className="drop-zone">
                 <FileAudio size={28} />
                 <strong>Drop a loop or audio file</strong>
-                <span>Recording and waveform clips will appear here in the next stage.</span>
+                <span>MP3, WAV, M4A, OGG, WEBM, or FLAC will be imported at the playhead.</span>
+                <button type="button" onClick={() => fileInputRef.current?.click()}>
+                  Browse audio
+                </button>
               </div>
             ) : null}
           </div>

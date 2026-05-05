@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import type { AudioClip, InputDevice, RecordingPermissionState, RecordingStatus } from '../types/daw'
 import { buildWaveformPeaks, decodeAudioBlob, getPreferredRecordingMimeType } from '../audio/waveform'
 import { useDawStore } from '../state/useDawStore'
+import { createId } from '../utils/id'
 import { secondsToBeat } from '../utils/time'
 
 type RecorderControls = {
@@ -9,14 +10,6 @@ type RecorderControls = {
   stopRecording: () => void
   toggleRecording: () => Promise<void>
   stopAllInput: () => void
-}
-
-function createId(prefix: string): string {
-  if (crypto.randomUUID) {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
 function getMicrophoneErrorMessage(error: unknown): string {

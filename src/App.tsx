@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import { buildWaveformPeaks, decodeAudioBlob } from './audio/waveform'
 import { BottomPanel } from './components/BottomPanel'
 import { Sidebar } from './components/Sidebar'
 import { Timeline } from './components/Timeline'
@@ -6,6 +7,9 @@ import { TopBar } from './components/TopBar'
 import { useMicrophoneRecorder } from './hooks/useMicrophoneRecorder'
 import { usePlaybackEngine } from './hooks/usePlaybackEngine'
 import { useDawStore } from './state/useDawStore'
+import type { AudioClip } from './types/daw'
+import { createId } from './utils/id'
+import { secondsToBeat } from './utils/time'
 
 export default function App() {
   const project = useDawStore((state) => state.project)
@@ -49,14 +53,121 @@ export default function App() {
   const trimClipStart = useDawStore((state) => state.trimClipStart)
   const trimClipEnd = useDawStore((state) => state.trimClipEnd)
   const deleteSelectedClip = useDawStore((state) => state.deleteSelectedClip)
+  const addRecordedClip = useDawStore((state) => state.addRecordedClip)
+  const setRecordingStatus = useDawStore((state) => state.setRecordingStatus)
+  const setRecordingError = useDawStore((state) => state.setRecordingError)
 
   const selectedTrack = tracks.find((track) => track.id === selectedTrackId) ?? tracks[0]
   const recorder = useMicrophoneRecorder()
+  const importAudioContextRef = useRef<AudioContext | null>(null)
   usePlaybackEngine()
 
   useEffect(() => {
     void restoreLastProject()
   }, [restoreLastProject])
+
+  useEffect(() => {
+    const preventBrowserFileOpen = (event: DragEvent) => {
+      if (!event.dataTransfer?.types.includes('Files')) {
+        return
+      }
+
+      event.preventDefault()
+    }
+
+    window.addEventListener('dragover', preventBrowserFileOpen)
+    window.addEventListener('drop', preventBrowserFileOpen)
+
+    return () => {
+      window.removeEventListener('dragover', preventBrowserFileOpen)
+      window.removeEventListener('drop', preventBrowserFileOpen)
+    }
+  }, [])
+
+  const getImportAudioContext = useCallback(() => {
+    if (!importAudioContextRef.current) {
+      importAudioContextRef.current = new AudioContext()
+    }
+
+    return importAudioContextRef.current
+  }, [])
+
+  const importAudioFiles = useCallback(
+    async (files: File[], startBeat?: number) => {
+      const state = useDawStore.getState()
+
+      if (state.transport.isRecording || state.recording.status === 'arming' || state.recording.status === 'encoding') {
+        setRecordingError('Stop recording before importing audio.')
+        return
+      }
+
+      if (state.transport.isPlaying) {
+        stopTransport()
+      }
+
+      const audioFiles = files.filter((file) => {
+        const hasAudioMime = file.type.startsWith('audio/')
+        const hasAudioExtension = /\.(aac|aif|aiff|flac|m4a|mp3|ogg|wav|webm)$/i.test(file.name)
+
+        return hasAudioMime || hasAudioExtension
+      })
+
+      if (audioFiles.length === 0) {
+        setRecordingError('Drop or choose a supported audio file.')
+        return
+      }
+
+      setRecordingStatus('encoding')
+      setRecordingError(null)
+
+      try {
+        const audioContext = getImportAudioContext()
+        await audioContext.resume()
+
+        let nextStartBeat = Math.max(0, startBeat ?? state.transport.currentBeat)
+        let importedCount = 0
+
+        for (const file of audioFiles) {
+          const audioBuffer = await decodeAudioBlob(file, audioContext)
+          const durationSeconds = audioBuffer.duration
+          const durationBeats = secondsToBeat(durationSeconds, state.project.bpm)
+          const blobId = createId('blob')
+          const clipId = createId('clip')
+          const clip: AudioClip = {
+            id: clipId,
+            trackId: state.selectedTrackId,
+            blobId,
+            name: file.name.replace(/\.[^.]+$/, '') || `Import ${state.clips.length + importedCount + 1}`,
+            startBeat: nextStartBeat,
+            durationBeats,
+            offsetSeconds: 0,
+            durationSeconds,
+            waveformPeaks: buildWaveformPeaks(audioBuffer),
+            objectUrl: URL.createObjectURL(file),
+            mimeType: file.type || 'audio/mpeg',
+            createdAt: new Date().toISOString(),
+          }
+
+          addRecordedClip(clip, file)
+          nextStartBeat += durationBeats
+          importedCount += 1
+        }
+
+        setRecordingError(null)
+      } catch {
+        setRecordingError('Audio import failed. Try an MP3, WAV, M4A, OGG, WEBM, or FLAC file.')
+      } finally {
+        setRecordingStatus('idle')
+      }
+    },
+    [
+      addRecordedClip,
+      getImportAudioContext,
+      setRecordingError,
+      setRecordingStatus,
+      stopTransport,
+    ],
+  )
 
   const handleStop = () => {
     if (transport.isRecording) {
@@ -119,6 +230,7 @@ export default function App() {
           currentBeat={transport.currentBeat}
           onClearClipSelection={() => selectClip(null)}
           onDeleteSelectedClip={deleteSelectedClip}
+          onImportAudioFiles={importAudioFiles}
           onMoveClip={moveClip}
           onSeekToBeat={seekToBeat}
           onSelectClip={selectClip}

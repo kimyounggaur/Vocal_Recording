@@ -253,6 +253,8 @@ export const useDawStore = create<DawState>((set, get) => ({
     set(({ transport }) => ({
       transport: {
         ...transport,
+        isPlaying: false,
+        isRecording: false,
         currentBeat: 0,
         currentTimeSeconds: 0,
       },
