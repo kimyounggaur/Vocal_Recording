@@ -11,9 +11,21 @@ import type { Track } from '../types/daw'
 
 type SidebarProps = {
   track: Track
+  selectedTrackId: string
+  onSelectTrack: (trackId: string) => void
+  onToggleMute: (trackId: string) => void
+  onToggleSolo: (trackId: string) => void
 }
 
-export function Sidebar({ track }: SidebarProps) {
+export function Sidebar({
+  track,
+  selectedTrackId,
+  onSelectTrack,
+  onToggleMute,
+  onToggleSolo,
+}: SidebarProps) {
+  const isSelected = track.id === selectedTrackId
+
   return (
     <aside className="sidebar" aria-label="Track list">
       <div className="track-actions">
@@ -29,7 +41,10 @@ export function Sidebar({ track }: SidebarProps) {
         </button>
       </div>
 
-      <article className="track-card is-selected">
+      <article
+        className={isSelected ? 'track-card is-selected' : 'track-card'}
+        onClick={() => onSelectTrack(track.id)}
+      >
         <div className="track-card-header">
           <div className="record-dot" aria-hidden="true" />
           <strong>{String(track.index).padStart(2, '0')}</strong>
@@ -41,8 +56,24 @@ export function Sidebar({ track }: SidebarProps) {
 
         <div className="track-card-controls">
           <div className="track-toggles" aria-label="Track toggles">
-            <button className={track.mixer.muted ? 'toggle is-on' : 'toggle'}>M</button>
-            <button className={track.mixer.solo ? 'toggle is-on' : 'toggle'}>S</button>
+            <button
+              className={track.mixer.muted ? 'toggle is-on' : 'toggle'}
+              onClick={(event) => {
+                event.stopPropagation()
+                onToggleMute(track.id)
+              }}
+            >
+              M
+            </button>
+            <button
+              className={track.mixer.solo ? 'toggle is-on' : 'toggle'}
+              onClick={(event) => {
+                event.stopPropagation()
+                onToggleSolo(track.id)
+              }}
+            >
+              S
+            </button>
             <button className="toggle">
               <ChevronDown size={14} />
             </button>
@@ -55,7 +86,7 @@ export function Sidebar({ track }: SidebarProps) {
 
         <div className="track-meter-row">
           <span className="track-meter">
-            <i style={{ width: `${track.mixer.volume}%` }} />
+            <i style={{ width: `${track.mixer.muted ? 0 : track.mixer.volume}%` }} />
           </span>
           <span className="pan-readout">
             <Volume1 size={14} />

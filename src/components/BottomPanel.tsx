@@ -11,18 +11,75 @@ import {
   X,
 } from 'lucide-react'
 import { Knob } from './Knob'
-import type { AutoPitchSettings, InputDevice, Track } from '../types/daw'
+import type { AutoPitchSettings, InputDevice, MixerState, Track } from '../types/daw'
 
 type BottomPanelProps = {
   autoPitch: AutoPitchSettings
   inputDevices: InputDevice[]
+  isMonitoring: boolean
+  selectedInputDeviceId: string
+  selectedInputChannelId: string
   track: Track
+  onSetInputDevice: (deviceId: string) => void
+  onSetInputChannel: (channelId: string) => void
+  onToggleMonitoring: () => void
+  onToggleAutoPitch: () => void
+  onDetectKey: () => void
+  onUpdateAutoPitch: <K extends keyof AutoPitchSettings>(
+    key: K,
+    value: AutoPitchSettings[K],
+  ) => void
+  onUpdateMixer: <K extends keyof MixerState>(
+    trackId: string,
+    key: K,
+    value: MixerState[K],
+  ) => void
 }
 
-const pitchCategories = ['Essentials', 'Clean', 'Pop', 'Harmony']
-const keys = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+const pitchCategories = ['Essentials', 'Pop', 'Rap', 'Natural']
+const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
-export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps) {
+function getPanLabel(value: number): string {
+  if (value === 0) {
+    return 'C'
+  }
+
+  return value > 0 ? `R${value}` : `L${Math.abs(value)}`
+}
+
+function getPitchAmountLabel(value: number): string {
+  if (value < 25) {
+    return 'Light'
+  }
+
+  if (value < 55) {
+    return 'Balanced'
+  }
+
+  if (value < 80) {
+    return 'Heavy'
+  }
+
+  return 'Heaviest'
+}
+
+export function BottomPanel({
+  autoPitch,
+  inputDevices,
+  isMonitoring,
+  selectedInputDeviceId,
+  selectedInputChannelId,
+  track,
+  onSetInputDevice,
+  onSetInputChannel,
+  onToggleMonitoring,
+  onToggleAutoPitch,
+  onDetectKey,
+  onUpdateAutoPitch,
+  onUpdateMixer,
+}: BottomPanelProps) {
+  const pitchAmountLabel = getPitchAmountLabel(autoPitch.amount)
+
   return (
     <section className="bottom-panel" aria-label="Voice and audio controls">
       <div className="panel-header">
@@ -54,7 +111,10 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
           <strong className="section-title">Input</strong>
           <label className="select-field">
             <span>Device</span>
-            <select defaultValue={inputDevices[0].id}>
+            <select
+              onChange={(event) => onSetInputDevice(event.currentTarget.value)}
+              value={selectedInputDeviceId}
+            >
               {inputDevices.map((device) => (
                 <option key={device.id} value={device.id}>
                   {device.label}
@@ -66,7 +126,10 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
 
           <label className="select-field">
             <span>Channel</span>
-            <select defaultValue={inputDevices[1].id}>
+            <select
+              onChange={(event) => onSetInputChannel(event.currentTarget.value)}
+              value={selectedInputChannelId}
+            >
               {inputDevices.map((device) => (
                 <option key={device.id} value={device.id}>
                   {device.label}
@@ -80,10 +143,10 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
             <div>
               <strong>Input Level</strong>
               <span className="input-meter">
-                <i />
+                <i style={{ width: isMonitoring ? '38%' : '18%' }} />
               </span>
             </div>
-            <button>
+            <button className={isMonitoring ? 'is-active' : ''} onClick={onToggleMonitoring}>
               <Headphones size={16} />
               Monitoring
             </button>
@@ -92,11 +155,15 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
 
         <article className="pitch-card" aria-label="Pitch Assist">
           <div className="pitch-card-top">
-            <button className={autoPitch.enabled ? 'power-toggle is-on' : 'power-toggle'} aria-label="Enable pitch assist">
+            <button
+              className={autoPitch.enabled ? 'power-toggle is-on' : 'power-toggle'}
+              aria-label="Enable pitch assist"
+              onClick={onToggleAutoPitch}
+            >
               <span />
             </button>
             <strong>Pitch Assist</strong>
-            <button className="auto-detect-button">
+            <button className="auto-detect-button" onClick={onDetectKey}>
               Auto Detect Key
               <SlidersHorizontal size={15} />
             </button>
@@ -106,7 +173,10 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
             <div className="pitch-column">
               <label className="compact-label">
                 Category
-                <select defaultValue={autoPitch.category}>
+                <select
+                  onChange={(event) => onUpdateAutoPitch('category', event.currentTarget.value)}
+                  value={autoPitch.category}
+                >
                   {pitchCategories.map((category) => (
                     <option key={category}>{category}</option>
                   ))}
@@ -114,8 +184,12 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
               </label>
 
               <div className="preset-grid">
-                {['Classic', 'Duet', 'Natural', 'Big Harmony', 'Tight', 'Chip'].map((preset, index) => (
-                  <button className={index === 0 ? 'preset-button is-selected' : 'preset-button'} key={preset}>
+                {pitchCategories.map((preset, index) => (
+                  <button
+                    className={preset === autoPitch.category ? 'preset-button is-selected' : 'preset-button'}
+                    key={preset}
+                    onClick={() => onUpdateAutoPitch('category', preset)}
+                  >
                     {index === 0 ? <Wand2 size={18} /> : index === 1 ? <Music2 size={18} /> : <CircleSlashed size={18} />}
                     {preset}
                   </button>
@@ -123,17 +197,29 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
               </div>
             </div>
 
-            <div className="pitch-amount">
-              <div className="large-knob">
+            <label className="pitch-amount">
+              <span className="large-knob">
                 <span style={{ transform: `rotate(${-132 + (autoPitch.amount / 100) * 264}deg)` }} />
-              </div>
-              <strong>Heaviest</strong>
-            </div>
+                <input
+                  aria-label="Pitch assist amount"
+                  className="large-knob-input"
+                  max={100}
+                  min={0}
+                  onChange={(event) => onUpdateAutoPitch('amount', Number(event.currentTarget.value))}
+                  type="range"
+                  value={autoPitch.amount}
+                />
+              </span>
+              <strong>{pitchAmountLabel}</strong>
+            </label>
 
             <div className="pitch-column">
               <label className="compact-label">
                 Scale
-                <select defaultValue={autoPitch.scale}>
+                <select
+                  onChange={(event) => onUpdateAutoPitch('scale', event.currentTarget.value)}
+                  value={autoPitch.scale}
+                >
                   <option>Chromatic</option>
                   <option>Major</option>
                   <option>Minor</option>
@@ -141,7 +227,11 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
               </label>
               <div className="key-grid" aria-label="Key selector">
                 {keys.map((key) => (
-                  <button className={key === autoPitch.key ? 'is-selected' : ''} key={key}>
+                  <button
+                    className={key === autoPitch.key ? 'is-selected' : ''}
+                    key={key}
+                    onClick={() => onUpdateAutoPitch('key', key)}
+                  >
                     {key}
                   </button>
                 ))}
@@ -151,14 +241,34 @@ export function BottomPanel({ autoPitch, inputDevices, track }: BottomPanelProps
         </article>
 
         <aside className="mixer-strip">
-          <div className="vertical-fader">
+          <label className="vertical-fader">
             <Gauge size={18} />
-            <input aria-label="Track volume" aria-orientation="vertical" defaultValue={track.mixer.volume} max={100} min={0} type="range" />
-            <strong>Volume</strong>
-          </div>
+            <input
+              aria-label="Track volume"
+              aria-orientation="vertical"
+              max={100}
+              min={0}
+              onChange={(event) => onUpdateMixer(track.id, 'volume', Number(event.currentTarget.value))}
+              type="range"
+              value={track.mixer.volume}
+            />
+            <strong>Volume {track.mixer.volume}</strong>
+          </label>
           <div className="knob-row">
-            <Knob label="Pan" value={50} />
-            <Knob label="Reverb" value={track.mixer.reverb} suffix="%" />
+            <Knob
+              displayValue={getPanLabel(track.mixer.pan)}
+              label="Pan"
+              max={100}
+              min={-100}
+              onChange={(value) => onUpdateMixer(track.id, 'pan', value)}
+              value={track.mixer.pan}
+            />
+            <Knob
+              label="Reverb"
+              onChange={(value) => onUpdateMixer(track.id, 'reverb', value)}
+              suffix="%"
+              value={track.mixer.reverb}
+            />
           </div>
         </aside>
       </div>

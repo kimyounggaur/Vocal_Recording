@@ -269,6 +269,11 @@ select {
   background: #2b2120;
 }
 
+.record-button.is-active {
+  background: #40201d;
+  box-shadow: inset 0 0 0 1px rgba(255, 79, 63, 0.45);
+}
+
 .time-display {
   display: grid;
   min-width: 128px;
@@ -309,6 +314,28 @@ select {
 .master-volume strong {
   min-width: 64px;
   font-size: 12px;
+}
+
+.tempo-input-chip input {
+  width: 56px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.tempo-input-chip input::-webkit-outer-spin-button,
+.tempo-input-chip input::-webkit-inner-spin-button {
+  margin: 0;
+}
+
+.key-select-chip select {
+  max-width: 96px;
+  outline: 0;
+  color: var(--text);
+  font-weight: 800;
 }
 
 .workspace-grid {
@@ -493,6 +520,8 @@ select {
 }
 
 .timeline {
+  display: grid;
+  grid-template-rows: 40px minmax(0, 1fr);
   min-width: 0;
   overflow: hidden;
   background: #020303;
@@ -524,9 +553,16 @@ select {
   gap: 5px;
 }
 
+.timeline-scroll {
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .ruler {
   display: grid;
   height: 38px;
+  min-width: 100%;
   border-bottom: 1px solid var(--line);
   background: #0b0f12;
 }
@@ -546,7 +582,8 @@ select {
 
 .arrangement {
   position: relative;
-  height: calc(100% - 78px);
+  height: calc(100% - 38px);
+  min-width: 100%;
   overflow: hidden;
   background: var(--lane);
 }
@@ -755,6 +792,11 @@ select {
   background: #2a3138;
 }
 
+.monitoring-row button.is-active {
+  color: #081210;
+  background: var(--accent-2);
+}
+
 .pitch-card {
   display: grid;
   align-self: stretch;
@@ -901,6 +943,17 @@ select {
   background: #52606b;
 }
 
+.large-knob-input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
 .pitch-amount strong {
   color: var(--quiet);
   font-size: 13px;
@@ -967,6 +1020,7 @@ select {
 
 .knob {
   position: relative;
+  display: block;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -995,6 +1049,17 @@ select {
   height: 2px;
   content: "";
   background: var(--text);
+}
+
+.knob-input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
 }
 
 .knob-control small {

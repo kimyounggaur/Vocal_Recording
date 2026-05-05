@@ -15,14 +15,45 @@ import {
   Square,
   Volume2,
 } from 'lucide-react'
-import type { Project, TransportState } from '../types/daw'
+import type { Project, ProjectKey, TransportState } from '../types/daw'
+import { formatTransportTime, MAX_BPM, MIN_BPM } from '../utils/time'
 
 type TopBarProps = {
   project: Project
   transport: TransportState
+  onTogglePlay: () => void
+  onToggleRecord: () => void
+  onStop: () => void
+  onReturnToStart: () => void
+  onSave: () => void
+  onSetBpm: (bpm: number) => void
+  onSetProjectKey: (key: ProjectKey) => void
 }
 
-export function TopBar({ project, transport }: TopBarProps) {
+const projectKeys: ProjectKey[] = [
+  'C Major',
+  'D Major',
+  'E Major',
+  'F Major',
+  'G Major',
+  'A Major',
+  'B Major',
+  'A Minor',
+  'D Minor',
+  'E Minor',
+]
+
+export function TopBar({
+  project,
+  transport,
+  onTogglePlay,
+  onToggleRecord,
+  onStop,
+  onReturnToStart,
+  onSave,
+  onSetBpm,
+  onSetProjectKey,
+}: TopBarProps) {
   const [beats, noteValue] = project.timeSignature
 
   return (
@@ -50,7 +81,7 @@ export function TopBar({ project, transport }: TopBarProps) {
           <small>Last Saved</small>
           <strong>{project.lastSaved}</strong>
         </span>
-        <button className="primary-pill">
+        <button className="primary-pill" onClick={onSave}>
           <Save size={17} />
           Save
         </button>
@@ -71,10 +102,17 @@ export function TopBar({ project, transport }: TopBarProps) {
           <ChevronDown size={15} />
         </button>
 
-        <div className="tempo-chip">
-          <strong>{project.bpm}</strong>
+        <label className="tempo-chip tempo-input-chip">
+          <input
+            aria-label="Project tempo"
+            max={MAX_BPM}
+            min={MIN_BPM}
+            onChange={(event) => onSetBpm(Number(event.currentTarget.value))}
+            type="number"
+            value={project.bpm}
+          />
           <span>bpm</span>
-        </div>
+        </label>
 
         <div className="tempo-chip">
           <strong>
@@ -82,25 +120,39 @@ export function TopBar({ project, transport }: TopBarProps) {
           </strong>
         </div>
 
-        <button className="key-chip">
+        <label className="key-chip key-select-chip">
           <KeyRound size={16} />
-          {project.key}
-        </button>
+          <select
+            aria-label="Project key"
+            onChange={(event) => onSetProjectKey(event.currentTarget.value as ProjectKey)}
+            value={project.key}
+          >
+            {projectKeys.map((key) => (
+              <option key={key} value={key}>
+                {key}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <div className="transport-buttons">
-          <button className="icon-button" aria-label="Play">
+          <button className="icon-button" aria-label="Play" onClick={onTogglePlay}>
             {transport.isPlaying ? <Pause size={20} /> : <Play size={20} fill="currentColor" />}
           </button>
-          <button className="icon-button" aria-label="Return to start">
+          <button className="icon-button" aria-label="Return to start" onClick={onReturnToStart}>
             <SkipBack size={20} />
           </button>
-          <button className="record-button" aria-label="Record">
+          <button
+            className={transport.isRecording ? 'record-button is-active' : 'record-button'}
+            aria-label="Record"
+            onClick={onToggleRecord}
+          >
             <Circle size={18} fill="currentColor" />
           </button>
-          <button className="icon-button" aria-label="Stop">
+          <button className="icon-button" aria-label="Stop" onClick={onStop}>
             <Square size={16} fill="currentColor" />
           </button>
-          <div className="time-display">{transport.displayTime}</div>
+          <div className="time-display">{formatTransportTime(transport.currentTimeSeconds)}</div>
         </div>
 
         <button className="mastering-chip">
