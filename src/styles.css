@@ -647,6 +647,109 @@ select {
   background: var(--lane-red);
 }
 
+.lane-fill {
+  position: absolute;
+  inset: 84px 0 0;
+  z-index: 0;
+  display: grid;
+  grid-template-rows: repeat(6, minmax(54px, 1fr));
+  pointer-events: none;
+}
+
+.lane-row {
+  position: relative;
+  min-height: 54px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018), transparent 34%),
+    rgba(255, 255, 255, 0.01);
+}
+
+.lane-row:nth-child(even) {
+  background:
+    linear-gradient(90deg, rgba(42, 199, 165, 0.025), transparent 36%),
+    rgba(255, 255, 255, 0.015);
+}
+
+.lane-row::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 122px;
+  content: "";
+  border-right: 1px solid rgba(255, 255, 255, 0.045);
+  background: linear-gradient(90deg, rgba(17, 21, 23, 0.64), rgba(17, 21, 23, 0));
+}
+
+.lane-row::after {
+  position: absolute;
+  right: 0;
+  bottom: 14px;
+  left: 142px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent 72%);
+  opacity: 0.48;
+}
+
+.lane-row-label {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  max-width: 96px;
+  overflow: hidden;
+  color: var(--quiet);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.lane-row-activity {
+  position: absolute;
+  top: 18px;
+  left: 158px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(42, 199, 165, 0.22), rgba(75, 159, 255, 0.12));
+  box-shadow: 140px 18px 0 rgba(255, 255, 255, 0.035);
+  opacity: 0.42;
+}
+
+.lane-row-activity-1 {
+  width: 26%;
+}
+
+.lane-row-activity-2 {
+  width: 18%;
+  opacity: 0.3;
+}
+
+.lane-row-activity-3 {
+  width: 32%;
+  opacity: 0.24;
+}
+
+.lane-row-activity-4 {
+  width: 22%;
+  opacity: 0.28;
+}
+
+.lane-row-activity-5 {
+  width: 42%;
+  background: linear-gradient(90deg, rgba(255, 79, 63, 0.2), rgba(246, 185, 50, 0.1));
+  opacity: 0.32;
+}
+
+.lane-row-activity-6 {
+  width: 30%;
+  opacity: 0.2;
+}
+
 .drop-zone {
   position: absolute;
   top: 116px;
@@ -660,6 +763,9 @@ select {
   color: var(--text);
   text-align: center;
   pointer-events: auto;
+  z-index: 1;
+  background: rgba(8, 10, 11, 0.7);
+  backdrop-filter: blur(2px);
 }
 
 .drop-zone span {

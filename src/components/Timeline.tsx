@@ -38,6 +38,14 @@ type ClipEditSession = {
 }
 
 const subdivisions = 4
+const emptyLaneRows = [
+  'Voice Lane',
+  'Double Lane',
+  'Harmony Lane',
+  'Comp Lane',
+  'FX Automation',
+  'Master Notes',
+]
 
 export function Timeline({
   bars,
@@ -294,6 +302,14 @@ export function Timeline({
 
           <div className="track-lane">
             <div className="record-region" />
+            <div className="lane-fill" aria-hidden="true">
+              {emptyLaneRows.map((label, index) => (
+                <div className="lane-row" key={label}>
+                  <span className="lane-row-label">{label}</span>
+                  <span className={`lane-row-activity lane-row-activity-${index + 1}`} />
+                </div>
+              ))}
+            </div>
             <input
               accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm,.flac"
               className="visually-hidden"
