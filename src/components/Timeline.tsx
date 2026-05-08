@@ -330,8 +330,8 @@ export function Timeline({
             {clips.length === 0 ? (
               <div className="drop-zone">
                 <FileAudio size={28} />
-                <strong>Drop a loop or audio file</strong>
-                <span>MP3, WAV, M4A, OGG, WEBM, or FLAC will be imported at the playhead.</span>
+                <strong>Drop audio here or start recording</strong>
+                <span>Imported audio lands at the playhead. Use Record in the lower panel for a vocal take.</span>
                 <button type="button" onClick={() => fileInputRef.current?.click()}>
                   Browse audio
                 </button>

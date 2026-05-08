@@ -968,7 +968,7 @@ select {
 .panel-tabs button {
   display: inline-flex;
   align-items: center;
-  min-width: 102px;
+  min-width: 94px;
   height: 32px;
   gap: 7px;
   padding: 0 14px;
@@ -986,21 +986,36 @@ select {
 
 .panel-content {
   display: grid;
-  grid-template-columns: 210px minmax(280px, 0.55fr) minmax(1220px, 1.9fr) 110px;
-  gap: 12px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
   min-height: 0;
   padding: 16px 12px 22px;
 }
 
 .panel-content > * {
+  display: none;
   min-width: 0;
+}
+
+.panel-content-record > .input-section,
+.panel-content-pitch > .pitch-card,
+.panel-content-effects > .effects-rack {
+  display: grid;
+}
+
+.panel-content-mixer > .mixer-strip {
+  display: flex;
 }
 
 .input-section {
   align-self: start;
   display: grid;
+  width: min(560px, 100%);
   gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #151a1d;
 }
 
 .section-title {
@@ -1094,6 +1109,77 @@ select {
   color: #ffb8af;
   border-color: rgba(255, 79, 63, 0.48);
   background: rgba(255, 79, 63, 0.12);
+}
+
+.record-control-card {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.record-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  gap: 10px;
+  border-radius: 8px;
+  color: var(--text);
+  background: linear-gradient(180deg, #313940, #20262b);
+  font-weight: 950;
+}
+
+.record-action span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 79, 63, 0.12);
+}
+
+.record-action.is-recording {
+  background: linear-gradient(180deg, #ff5b4d, #c9251b);
+}
+
+.record-action.is-recording span {
+  background: #fff;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.5);
+}
+
+.record-state-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.record-state-grid span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid #263039;
+  border-radius: 7px;
+  background: #111619;
+}
+
+.record-state-grid strong,
+.record-state-grid em {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.record-state-grid strong {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.record-state-grid em {
+  color: var(--text);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .pitch-card {
@@ -1295,11 +1381,119 @@ select {
 
 .effects-rack {
   display: grid;
-  grid-template-columns: 420px 390px 300px 110px;
-  gap: 8px;
+  grid-template-columns: 220px minmax(420px, 1fr) 160px;
+  gap: 14px;
   align-self: stretch;
   min-width: 0;
   overflow: hidden;
+}
+
+.effect-chain,
+.effect-macro-strip {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #151a1d;
+}
+
+.effect-chain > strong,
+.effect-macro-strip > strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.effect-chain-button {
+  display: grid;
+  grid-template-columns: 12px 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px;
+  border: 1px solid #263039;
+  border-radius: 7px;
+  background: #101417;
+  color: var(--muted);
+  text-align: left;
+}
+
+.effect-chain-button.is-selected {
+  color: var(--text);
+  border-color: rgba(42, 199, 165, 0.62);
+  background: linear-gradient(180deg, #1d2729, #141a1d);
+}
+
+.effect-chain-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a4248;
+}
+
+.effect-chain-led.is-on {
+  background: var(--accent-2);
+  box-shadow: 0 0 10px rgba(42, 199, 165, 0.5);
+}
+
+.effect-chain-button em {
+  color: var(--quiet);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.effect-chain-button span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.effect-chain-button strong,
+.effect-chain-button small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.effect-chain-button strong {
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.effect-chain-button small {
+  color: var(--quiet);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.effects-rack > article {
+  justify-self: center;
+  align-self: center;
+}
+
+.effects-rack > .h-delay-panel,
+.effects-rack > .plate-reverb-panel,
+.effects-rack > .tube-compressor-panel,
+.effects-rack > .eq-card {
+  transform: scale(1.05);
+  transform-origin: center;
+}
+
+.is-effect-hidden {
+  display: none;
+}
+
+.effect-macro-strip {
+  justify-items: center;
+}
+
+.effect-macro-strip .knob-control {
+  padding: 6px 0;
 }
 
 .compressor-panel {
@@ -2672,6 +2866,42 @@ select {
   font-size: 11px;
 }
 
+.panel-content:not(.panel-content-record) > .input-section,
+.panel-content:not(.panel-content-pitch) > .pitch-card,
+.panel-content:not(.panel-content-effects) > .effects-rack,
+.panel-content:not(.panel-content-mixer) > .mixer-strip {
+  display: none;
+}
+
+.panel-content-record > .input-section {
+  display: grid;
+  justify-self: start;
+}
+
+.panel-content-pitch > .pitch-card {
+  display: grid;
+  justify-self: stretch;
+}
+
+.panel-content-effects > .effects-rack {
+  display: grid;
+}
+
+.panel-content-mixer > .mixer-strip {
+  display: flex;
+  justify-self: start;
+  align-self: center;
+  min-width: 420px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #151a1d;
+}
+
+.effects-rack > .is-effect-hidden {
+  display: none;
+}
+
 @media (max-width: 1279px) {
   .daw-shell {
     grid-template-rows: 108px minmax(320px, 1fr) 420px;
@@ -2692,8 +2922,7 @@ select {
   }
 
   .panel-content {
-    grid-template-columns: 210px 280px 1220px 110px;
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mastering-chip,

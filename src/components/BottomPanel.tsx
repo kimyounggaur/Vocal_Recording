@@ -3,6 +3,7 @@ import {
   CircleSlashed,
   Gauge,
   Headphones,
+  Mic2,
   Music2,
   PanelBottom,
   SlidersHorizontal,
@@ -10,6 +11,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Knob } from './Knob'
 import type {
   AutoPitchSettings,
@@ -38,6 +40,7 @@ type BottomPanelProps = {
   onSetInputDevice: (deviceId: string) => void
   onSetInputChannel: (channelId: string) => void
   onToggleMonitoring: () => void
+  onToggleRecord: () => void | Promise<void>
   onToggleAutoPitch: () => void
   onDetectKey: () => void
   onUpdateAutoPitch: <K extends keyof AutoPitchSettings>(
@@ -50,6 +53,9 @@ type BottomPanelProps = {
     value: MixerState[K],
   ) => void
 }
+
+type PanelTab = 'record' | 'pitch' | 'effects' | 'mixer'
+type EffectId = 'compressor' | 'eq' | 'delay' | 'reverb'
 
 const pitchCategories: PitchCategory[] = ['Essentials', 'Pop', 'Rap', 'Natural']
 const pitchScales: PitchScale[] = ['Chromatic', 'Major', 'Minor']
@@ -110,13 +116,25 @@ export function BottomPanel({
   onSetInputDevice,
   onSetInputChannel,
   onToggleMonitoring,
+  onToggleRecord,
   onToggleAutoPitch,
   onDetectKey,
   onUpdateAutoPitch,
   onUpdateMixer,
 }: BottomPanelProps) {
+  const [activePanel, setActivePanel] = useState<PanelTab>('record')
+  const [activeEffect, setActiveEffect] = useState<EffectId>('compressor')
   const pitchAmountLabel = getPitchAmountLabel(autoPitch.amount)
   const isRecordingActive = recording.status === 'arming' || recording.status === 'recording'
+  const isRecordButtonDisabled = recording.status === 'encoding'
+  const recordActionLabel =
+    recording.status === 'recording'
+      ? 'Stop Recording'
+      : recording.status === 'arming'
+        ? 'Preparing Mic'
+        : recording.status === 'encoding'
+          ? 'Creating Clip'
+          : 'Record Voice'
   const updateDelay = <K extends keyof DelaySettings>(key: K, value: DelaySettings[K]) => {
     onUpdateMixer(track.id, 'delay', {
       ...track.mixer.delay,
@@ -142,6 +160,32 @@ export function BottomPanel({
   const compressorNeedle = compressor.enabled
     ? -42 + (compressorReduction / 100) * 84
     : -48
+  const effectChain: Array<{ id: EffectId; label: string; detail: string; enabled: boolean }> = [
+    {
+      id: 'compressor',
+      label: 'Compressor',
+      detail: compressor.enabled ? `${compressor.ratio}:1 / ${compressor.threshold} dB` : 'Off',
+      enabled: compressor.enabled,
+    },
+    {
+      id: 'eq',
+      label: 'Graphic EQ',
+      detail: Object.values(track.mixer.eqBands).some((value) => value !== 0) ? 'Custom curve' : 'Flat',
+      enabled: Object.values(track.mixer.eqBands).some((value) => value !== 0),
+    },
+    {
+      id: 'delay',
+      label: 'Hybrid Delay',
+      detail: track.mixer.delay.enabled ? `${track.mixer.delay.timeMs} ms / ${track.mixer.delay.mix}%` : 'Off',
+      enabled: track.mixer.delay.enabled,
+    },
+    {
+      id: 'reverb',
+      label: 'Plate Reverb',
+      detail: track.mixer.reverbEnabled ? `${track.mixer.reverb}% wet / ${track.mixer.reverbSize}% size` : 'Off',
+      enabled: track.mixer.reverbEnabled,
+    },
+  ]
 
   return (
     <section className="bottom-panel" aria-label="Voice and audio controls">
@@ -154,22 +198,42 @@ export function BottomPanel({
           <strong>{track.name}</strong>
         </div>
         <nav className="panel-tabs" aria-label="Editor tabs">
-          <button className="is-active">
-            <Wand2 size={16} />
-            Pitch Assist
+          <button
+            aria-pressed={activePanel === 'record'}
+            className={activePanel === 'record' ? 'is-active' : ''}
+            onClick={() => setActivePanel('record')}
+          >
+            <Mic2 size={16} />
+            Record
           </button>
-          <button>
+          <button
+            aria-pressed={activePanel === 'pitch'}
+            className={activePanel === 'pitch' ? 'is-active' : ''}
+            onClick={() => setActivePanel('pitch')}
+          >
+            <Wand2 size={16} />
+            Pitch
+          </button>
+          <button
+            aria-pressed={activePanel === 'effects'}
+            className={activePanel === 'effects' ? 'is-active' : ''}
+            onClick={() => setActivePanel('effects')}
+          >
             <Sparkles size={16} />
             Effects
           </button>
-          <button>
+          <button
+            aria-pressed={activePanel === 'mixer'}
+            className={activePanel === 'mixer' ? 'is-active' : ''}
+            onClick={() => setActivePanel('mixer')}
+          >
             <PanelBottom size={16} />
-            Editor
+            Mixer
           </button>
         </nav>
       </div>
 
-      <div className="panel-content">
+      <div className={`panel-content panel-content-${activePanel}`}>
         <aside className="input-section">
           <strong className="section-title">Input</strong>
           <label className="select-field">
@@ -226,6 +290,32 @@ export function BottomPanel({
                   : recording.permission === 'granted'
                     ? 'Microphone ready'
                     : 'Microphone idle')}
+          </div>
+
+          <div className="record-control-card">
+            <button
+              className={recording.status === 'recording' ? 'record-action is-recording' : 'record-action'}
+              disabled={isRecordButtonDisabled}
+              onClick={onToggleRecord}
+              type="button"
+            >
+              <span />
+              {recordActionLabel}
+            </button>
+            <div className="record-state-grid">
+              <span>
+                <strong>Permission</strong>
+                <em>{recording.permission}</em>
+              </span>
+              <span>
+                <strong>Status</strong>
+                <em>{recording.status}</em>
+              </span>
+              <span>
+                <strong>Monitoring</strong>
+                <em>{isMonitoring ? 'On' : 'Off'}</em>
+              </span>
+            </div>
           </div>
         </aside>
 
@@ -325,7 +415,29 @@ export function BottomPanel({
         </article>
 
         <section className="effects-rack" aria-label="Track effects">
-          <article className="h-delay-panel" aria-label="Hybrid Delay">
+          <aside className="effect-chain" aria-label="Effect chain">
+            <strong>Effect Chain</strong>
+            {effectChain.map((effect, index) => (
+              <button
+                className={activeEffect === effect.id ? 'effect-chain-button is-selected' : 'effect-chain-button'}
+                key={effect.id}
+                onClick={() => setActiveEffect(effect.id)}
+                type="button"
+              >
+                <span className={effect.enabled ? 'effect-chain-led is-on' : 'effect-chain-led'} />
+                <em>{String(index + 1).padStart(2, '0')}</em>
+                <span>
+                  <strong>{effect.label}</strong>
+                  <small>{effect.detail}</small>
+                </span>
+              </button>
+            ))}
+          </aside>
+
+          <article
+            className={activeEffect === 'delay' ? 'h-delay-panel' : 'h-delay-panel is-effect-hidden'}
+            aria-label="Hybrid Delay"
+          >
             <div className="delay-tap-section">
               <button
                 aria-label="Enable delay"
@@ -513,7 +625,10 @@ export function BottomPanel({
             </div>
           </article>
 
-          <article className="plate-reverb-panel" aria-label="Plate Reverb">
+          <article
+            className={activeEffect === 'reverb' ? 'plate-reverb-panel' : 'plate-reverb-panel is-effect-hidden'}
+            aria-label="Plate Reverb"
+          >
             <div className="plate-main">
               <div className="plate-brand">
                 <strong>PLATE ROOM-40</strong>
@@ -716,7 +831,10 @@ export function BottomPanel({
             </div>
           </article>
 
-          <article className="tube-compressor-panel" aria-label="Compressor">
+          <article
+            className={activeEffect === 'compressor' ? 'tube-compressor-panel' : 'tube-compressor-panel is-effect-hidden'}
+            aria-label="Compressor"
+          >
             <aside className="tube-comp-side">
               <button className="tube-comp-pill" type="button">PRESETS</button>
               <span>MODE</span>
@@ -851,7 +969,7 @@ export function BottomPanel({
             </aside>
           </article>
 
-          <article className="effect-card eq-card">
+          <article className={activeEffect === 'eq' ? 'effect-card eq-card' : 'effect-card eq-card is-effect-hidden'}>
             <div className="effect-card-head">
               <span>
                 <SlidersHorizontal size={14} />
@@ -877,6 +995,30 @@ export function BottomPanel({
               ))}
             </div>
           </article>
+
+          <aside className="effect-macro-strip" aria-label="Selected track macros">
+            <strong>Track Macros</strong>
+            <Knob
+              displayValue={getPanLabel(track.mixer.pan)}
+              label="Pan"
+              max={100}
+              min={-100}
+              onChange={(value) => onUpdateMixer(track.id, 'pan', value)}
+              value={track.mixer.pan}
+            />
+            <Knob
+              label="Volume"
+              onChange={(value) => onUpdateMixer(track.id, 'volume', value)}
+              suffix="%"
+              value={track.mixer.volume}
+            />
+            <Knob
+              label="Room"
+              onChange={(value) => onUpdateMixer(track.id, 'reverb', value)}
+              suffix="%"
+              value={track.mixer.reverb}
+            />
+          </aside>
         </section>
 
         <aside className="mixer-strip">

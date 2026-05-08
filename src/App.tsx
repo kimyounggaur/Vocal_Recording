@@ -255,6 +255,7 @@ export default function App() {
         onSetInputDevice={setInputDevice}
         onToggleAutoPitch={toggleAutoPitch}
         onToggleMonitoring={toggleMonitoring}
+        onToggleRecord={recorder.toggleRecording}
         onUpdateAutoPitch={updateAutoPitch}
         onUpdateMixer={updateTrackMixer}
         recording={recording}
