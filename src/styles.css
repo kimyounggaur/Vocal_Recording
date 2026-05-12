@@ -4484,6 +4484,7 @@ input[type="range"] {
 
 .track-tool-button:hover,
 .track-tool-button:focus-visible,
+.track-tool-button.is-cursor-tool,
 .track-tool-button.is-active {
   border-color: var(--accent);
   background: rgba(91, 118, 254, 0.1);
@@ -4492,6 +4493,7 @@ input[type="range"] {
 
 .track-tool-button:hover img,
 .track-tool-button:focus-visible img,
+.track-tool-button.is-cursor-tool img,
 .track-tool-button.is-active img {
   opacity: 1;
   transform: scale(1.05);
@@ -4500,6 +4502,29 @@ input[type="range"] {
 .track-tool-button:disabled {
   cursor: not-allowed;
   opacity: 0.42;
+}
+
+.timeline-scroll,
+.arrangement,
+.track-lane,
+.lane-fill,
+.lane-row,
+.beat-grid,
+.drop-zone {
+  cursor: var(--track-tool-cursor, auto);
+}
+
+.timeline button:not(.audio-clip),
+.timeline input {
+  cursor: pointer;
+}
+
+.timeline .audio-clip {
+  cursor: var(--track-tool-cursor, auto);
+}
+
+.timeline .clip-trim-handle {
+  cursor: ew-resize;
 }
 
 .track-tool-popover {

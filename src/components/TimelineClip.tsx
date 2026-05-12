@@ -9,6 +9,7 @@ type TimelineClipProps = {
   clip: AudioClip
   isSelected: boolean
   pixelsPerBeat: number
+  canMoveClip: boolean
   onSelect: (clipId: string) => void
   onEditStart: (clip: AudioClip, mode: ClipEditMode, pointerX: number) => void
 }
@@ -17,6 +18,7 @@ export function TimelineClip({
   clip,
   isSelected,
   pixelsPerBeat,
+  canMoveClip,
   onSelect,
   onEditStart,
 }: TimelineClipProps) {
@@ -27,6 +29,11 @@ export function TimelineClip({
     event.preventDefault()
     event.stopPropagation()
     onSelect(clip.id)
+
+    if (mode === 'move' && !canMoveClip) {
+      return
+    }
+
     onEditStart(clip, mode, event.clientX)
   }
 
