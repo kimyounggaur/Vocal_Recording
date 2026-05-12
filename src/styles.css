@@ -1,28 +1,32 @@
 :root {
-  color-scheme: dark;
-  --bg: #010120;
-  --panel: rgba(255, 255, 255, 0.08);
-  --panel-soft: rgba(255, 255, 255, 0.08);
-  --panel-strong: rgba(255, 255, 255, 0.14);
-  --line: rgba(255, 255, 255, 0.12);
-  --line-soft: rgba(255, 255, 255, 0.08);
-  --text: #ffffff;
-  --muted: rgba(255, 255, 255, 0.66);
-  --quiet: rgba(255, 255, 255, 0.44);
-  --accent: #bdbbff;
-  --accent-2: #bdbbff;
-  --yellow: #bdbbff;
-  --blue: #bdbbff;
-  --lane: rgba(255, 255, 255, 0.035);
-  --lane-red: rgba(189, 187, 255, 0.08);
-  --brand-magenta: #ef2cc1;
-  --brand-orange: #fc4c02;
-  --dark-blue: #010120;
-  --glass-light: rgba(255, 255, 255, 0.12);
-  --glass-quiet: rgba(255, 255, 255, 0.06);
-  --blue-shadow: rgba(1, 1, 32, 0.1) 0 4px 10px;
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-soft: #f6f7fb;
+  --panel-strong: #eef1ff;
+  --line: #e0e2e8;
+  --line-soft: rgba(224, 226, 232, 0.62);
+  --text: #1c1c1e;
+  --muted: #555a6a;
+  --quiet: #a5a8b5;
+  --accent: #5b76fe;
+  --accent-2: #00b473;
+  --yellow: #ffe6cd;
+  --blue: #5b76fe;
+  --lane: #fbfbff;
+  --lane-red: #ffd8f4;
+  --coral-light: #ffc6c6;
+  --coral-dark: #600000;
+  --rose-light: #ffd8f4;
+  --teal-light: #c3faf5;
+  --teal-dark: #187574;
+  --orange-light: #ffe6cd;
+  --pink-light: #fde0f0;
+  --red-light: #fbd4d4;
+  --ring-shadow: rgb(224, 226, 232) 0 0 0 1px;
+  --focus-shadow: #5b76fe 0 0 0 1px;
   font-family:
-    Arial, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Inter, "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
 }
 
@@ -3785,4 +3789,511 @@ select {
 .analog-eq-panel {
   border-radius: 8px;
   box-shadow: var(--blue-shadow);
+}
+
+/* Miro inspired collaborative board skin */
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.daw-shell {
+  background:
+    radial-gradient(circle at 10% 2%, rgba(255, 198, 198, 0.62), transparent 24%),
+    radial-gradient(circle at 56% -8%, rgba(195, 250, 245, 0.7), transparent 28%),
+    radial-gradient(circle at 91% 4%, rgba(255, 230, 205, 0.74), transparent 23%),
+    linear-gradient(180deg, #ffffff 0%, #fbfbff 47%, #ffffff 100%);
+  color: var(--text);
+}
+
+.topbar,
+.sidebar,
+.timeline,
+.bottom-panel {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.topbar {
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--ring-shadow);
+}
+
+.toolbar-row,
+.timeline-tools,
+.panel-header {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.brand-cluster,
+.save-cluster {
+  background: transparent;
+}
+
+.app-mark,
+.record-button {
+  color: var(--accent);
+}
+
+.app-name,
+.project-title,
+.panel-title strong,
+.track-card-header span,
+.section-title,
+.effect-chain > strong,
+.effect-macro-strip > strong,
+.record-track-summary strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: -0.42px;
+}
+
+.save-state small,
+.record-track-summary span,
+.record-state-grid strong,
+.effect-chain-button em,
+.effect-chain-button small,
+.timeline-status span,
+.lane-row-label,
+.compact-label,
+.amount-scale small,
+.effect-macro-strip > strong,
+.effect-chain > strong,
+.button-label {
+  color: var(--muted);
+  font-family: Inter, "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.12px;
+  text-transform: uppercase;
+}
+
+.upgrade-button,
+.primary-pill,
+.add-track-button,
+.fx-pill,
+.auto-detect-button,
+.monitoring-row button,
+.panel-tabs button,
+.icon-button,
+.mini-icon-button,
+.round-tool,
+.close-panel,
+.metronome-button,
+.key-chip,
+.mastering-chip,
+.tempo-chip,
+.undo-redo,
+.transport-buttons,
+.track-toggles,
+.record-action,
+.drop-zone button,
+.effect-chain-button,
+.effect-toggle,
+.power-toggle,
+.toggle,
+.select-field,
+.input-alert,
+.record-track-summary,
+.record-state-grid span,
+.key-grid button,
+.preset-button,
+.compact-label select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #ffffff;
+  box-shadow: var(--ring-shadow);
+}
+
+.pitch-card,
+.input-section,
+.effect-chain,
+.effect-macro-strip,
+.track-card,
+.automation-row,
+.mixer-strip,
+.drop-zone,
+.audio-clip {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: var(--ring-shadow);
+}
+
+.input-section {
+  background:
+    linear-gradient(135deg, rgba(195, 250, 245, 0.55), rgba(255, 255, 255, 0.72) 48%),
+    #ffffff;
+  width: min(1120px, 100%);
+  grid-template-columns: minmax(360px, 1fr) minmax(280px, 340px);
+  align-items: start;
+  gap: 10px 14px;
+  padding: 14px 16px;
+}
+
+.input-section > .section-title {
+  grid-column: 1 / -1;
+}
+
+.input-section > .record-track-summary,
+.input-section > .select-field,
+.input-section > .monitoring-row,
+.input-section > .input-alert {
+  grid-column: 1;
+}
+
+.input-section > .record-control-card {
+  grid-column: 2;
+  grid-row: 2 / span 5;
+  align-self: stretch;
+  align-content: center;
+}
+
+.pitch-card {
+  background:
+    linear-gradient(135deg, rgba(253, 224, 240, 0.6), rgba(255, 255, 255, 0.78) 52%),
+    #ffffff;
+}
+
+.effect-chain {
+  background:
+    linear-gradient(180deg, rgba(238, 241, 255, 0.82), #ffffff 44%),
+    #ffffff;
+}
+
+.effect-macro-strip,
+.mixer-strip {
+  background:
+    linear-gradient(180deg, rgba(255, 230, 205, 0.54), #ffffff 52%),
+    #ffffff;
+}
+
+.icon-button:hover,
+.mini-icon-button:hover,
+.round-tool:hover,
+.close-panel:hover,
+.metronome-button:hover,
+.key-chip:hover,
+.mastering-chip:hover,
+.panel-tabs button:hover,
+.effect-chain-button:hover,
+.drop-zone button:hover,
+.record-action:not(:disabled):hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: #f7f8ff;
+  box-shadow: var(--focus-shadow);
+}
+
+.upgrade-button,
+.primary-pill,
+.save-button,
+.drop-zone button {
+  color: #ffffff;
+  border-color: var(--accent);
+  background: var(--accent);
+  font-weight: 700;
+}
+
+.upgrade-button:hover,
+.primary-pill:hover,
+.save-button:hover,
+.drop-zone button:hover {
+  color: #ffffff;
+  background: #2a41b6;
+}
+
+.add-track-button,
+.fx-pill,
+.auto-detect-button,
+.monitoring-row button,
+.panel-tabs button,
+.tempo-chip,
+.mastering-chip,
+.track-toggles,
+.transport-buttons,
+.undo-redo {
+  color: var(--text);
+  background: #ffffff;
+}
+
+.panel-tabs {
+  gap: 8px;
+}
+
+.panel-tabs button {
+  min-width: 96px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.panel-tabs button.is-active,
+.effect-chain-button.is-selected,
+.toggle.is-on,
+.monitoring-row button.is-active,
+.key-grid button.is-selected,
+.preset-button.is-selected {
+  color: #ffffff;
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.transport-buttons button.is-active,
+.transport-buttons button:hover,
+.record-button:hover,
+.record-button.is-active {
+  color: #ffffff;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.record-action {
+  min-height: 72px;
+  color: #ffffff;
+  border-color: var(--accent);
+  border-radius: 14px;
+  background: var(--accent);
+  box-shadow: 0 12px 28px rgba(91, 118, 254, 0.2);
+}
+
+.record-action span {
+  background: #ffffff;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.32);
+}
+
+.record-action.is-recording {
+  color: var(--coral-dark);
+  border-color: var(--coral-light);
+  background: var(--coral-light);
+  box-shadow: 0 12px 28px rgba(96, 0, 0, 0.14);
+}
+
+.record-action.is-recording:not(:disabled):hover {
+  color: var(--coral-dark);
+  background: #ffb6b6;
+}
+
+.input-meter,
+.track-meter {
+  background: #e9eaef;
+}
+
+.track-meter i,
+.input-meter i {
+  background: linear-gradient(90deg, var(--accent-2), #5b76fe);
+}
+
+.workspace-grid {
+  border-top: 1px solid var(--line);
+}
+
+.sidebar {
+  border-right: 1px solid var(--line);
+}
+
+.track-card {
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.track-card.is-selected {
+  background: linear-gradient(90deg, rgba(91, 118, 254, 0.1), #ffffff 54%);
+}
+
+.track-card.is-selected::after {
+  width: 3px;
+  background: var(--accent);
+}
+
+.record-dot {
+  border-color: var(--coral-dark);
+}
+
+.timeline {
+  background: #ffffff;
+}
+
+.timeline-scroll,
+.ruler,
+.arrangement {
+  background: #ffffff;
+}
+
+.ruler,
+.bar-label,
+.record-region {
+  border-color: var(--line);
+}
+
+.bar-label {
+  color: var(--muted);
+}
+
+.bar-label.is-current {
+  color: #ffffff;
+  background: var(--accent);
+}
+
+.grid-line {
+  border-left-color: rgba(199, 202, 213, 0.52);
+}
+
+.grid-line.is-bar {
+  border-left-color: #c7cad5;
+}
+
+.lane-row {
+  border-bottom-color: var(--line);
+  background:
+    linear-gradient(90deg, rgba(195, 250, 245, 0.34), transparent 36%),
+    #fbfbff;
+}
+
+.lane-row:nth-child(even) {
+  background:
+    linear-gradient(90deg, rgba(253, 224, 240, 0.38), transparent 36%),
+    #ffffff;
+}
+
+.lane-row::before {
+  border-right-color: var(--line);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+}
+
+.lane-row-activity {
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(91, 118, 254, 0.28), rgba(0, 180, 115, 0.18));
+}
+
+.drop-zone {
+  border: 1px dashed #5b76fe;
+  background:
+    linear-gradient(135deg, rgba(195, 250, 245, 0.74), rgba(255, 216, 244, 0.52)),
+    #ffffff;
+}
+
+.drop-zone strong {
+  color: var(--text);
+}
+
+.drop-zone span {
+  color: var(--muted);
+}
+
+.audio-clip {
+  color: var(--text);
+  border-color: rgba(91, 118, 254, 0.62);
+  background:
+    linear-gradient(135deg, rgba(91, 118, 254, 0.16), rgba(195, 250, 245, 0.42)),
+    #ffffff;
+  box-shadow: var(--ring-shadow);
+}
+
+.audio-clip:hover,
+.audio-clip.is-selected {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px rgba(91, 118, 254, 0.2),
+    var(--ring-shadow);
+}
+
+.playhead,
+.playhead span {
+  background: var(--accent);
+}
+
+.select-field select,
+.compact-label select {
+  color: var(--text);
+}
+
+.select-field span,
+.monitoring-row strong,
+.record-state-grid em,
+.effect-chain-button strong,
+.effect-chain-button small,
+.timeline-status strong,
+.track-card small,
+.track-card em {
+  color: var(--text);
+}
+
+.input-alert {
+  color: var(--muted);
+  background: #ffffff;
+}
+
+.input-alert.is-error {
+  color: var(--coral-dark);
+  border-color: var(--coral-light);
+  background: #fff1f1;
+}
+
+.effect-chain-button {
+  min-height: 58px;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.effect-chain-button.is-selected {
+  background: var(--accent);
+}
+
+.effect-chain-button.is-selected em,
+.effect-chain-button.is-selected strong,
+.effect-chain-button.is-selected small {
+  color: #ffffff;
+}
+
+.effect-chain-led {
+  background: #c7cad5;
+}
+
+.effect-chain-led.is-on,
+.power-toggle.is-on,
+.rack-led.is-on {
+  background: var(--accent-2);
+  box-shadow: 0 0 0 4px rgba(0, 180, 115, 0.14);
+}
+
+.key-grid button,
+.preset-button {
+  color: var(--muted);
+}
+
+.large-knob,
+.knob,
+.compressor-knob,
+.hardware-knob,
+.plate-knob,
+.tube-comp-knob,
+.rack-trim-knob {
+  filter: saturate(0.92) contrast(1.02);
+}
+
+.h-delay-panel,
+.plate-reverb-panel,
+.tube-compressor-panel,
+.analog-eq-panel,
+.compressor-panel,
+.eq-card {
+  border-radius: 20px;
+  box-shadow: var(--ring-shadow);
+}
+
+.panel-content-mixer > .mixer-strip {
+  background:
+    linear-gradient(135deg, rgba(255, 230, 205, 0.64), rgba(255, 255, 255, 0.78) 54%),
+    #ffffff;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
 }
