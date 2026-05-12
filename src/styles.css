@@ -1,22 +1,28 @@
 :root {
   color-scheme: dark;
-  --bg: #07090a;
-  --panel: #111518;
-  --panel-soft: #171d21;
-  --panel-strong: #20262c;
-  --line: #2a3239;
-  --line-soft: rgba(255, 255, 255, 0.07);
-  --text: #f7f9fb;
-  --muted: #94a2ad;
-  --quiet: #687581;
-  --accent: #ff4f3f;
-  --accent-2: #2ac7a5;
-  --yellow: #f6b932;
-  --blue: #4b9fff;
-  --lane: #100c0c;
-  --lane-red: rgba(142, 45, 40, 0.24);
+  --bg: #010120;
+  --panel: rgba(255, 255, 255, 0.08);
+  --panel-soft: rgba(255, 255, 255, 0.08);
+  --panel-strong: rgba(255, 255, 255, 0.14);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.66);
+  --quiet: rgba(255, 255, 255, 0.44);
+  --accent: #bdbbff;
+  --accent-2: #bdbbff;
+  --yellow: #bdbbff;
+  --blue: #bdbbff;
+  --lane: rgba(255, 255, 255, 0.035);
+  --lane-red: rgba(189, 187, 255, 0.08);
+  --brand-magenta: #ef2cc1;
+  --brand-orange: #fc4c02;
+  --dark-blue: #010120;
+  --glass-light: rgba(255, 255, 255, 0.12);
+  --glass-quiet: rgba(255, 255, 255, 0.06);
+  --blue-shadow: rgba(1, 1, 32, 0.1) 0 4px 10px;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Arial, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
 }
 
@@ -31,6 +37,8 @@ body {
   overflow: auto;
   background: var(--bg);
   color: var(--text);
+  font-weight: 400;
+  letter-spacing: -0.16px;
 }
 
 button,
@@ -3417,4 +3425,364 @@ select {
   .daw-shell {
     width: 1900px;
   }
+}
+
+/* Together AI inspired product skin */
+.daw-shell {
+  background:
+    radial-gradient(ellipse at 18% -10%, rgba(239, 44, 193, 0.14), transparent 34%),
+    radial-gradient(ellipse at 56% -16%, rgba(189, 187, 255, 0.18), transparent 38%),
+    radial-gradient(ellipse at 84% -8%, rgba(130, 170, 255, 0.12), transparent 34%),
+    var(--dark-blue);
+}
+
+.topbar,
+.sidebar,
+.timeline,
+.bottom-panel {
+  background: rgba(1, 1, 32, 0.86);
+}
+
+.topbar {
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--blue-shadow);
+}
+
+.toolbar-row,
+.timeline-tools,
+.panel-header {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: var(--line);
+}
+
+.app-mark {
+  color: var(--accent);
+}
+
+.app-name,
+.project-title,
+.panel-title strong,
+.track-card-header span,
+.section-title,
+.effect-chain > strong,
+.effect-macro-strip > strong {
+  font-weight: 500;
+  letter-spacing: -0.18px;
+}
+
+.save-state small,
+.section-title,
+.record-track-summary span,
+.record-state-grid strong,
+.effect-chain-button em,
+.effect-chain-button small,
+.timeline-status span,
+.lane-row-label,
+.compact-label,
+.amount-scale small,
+.effect-macro-strip > strong,
+.effect-chain > strong {
+  font-family: "Courier New", Consolas, monospace;
+  font-weight: 500;
+  letter-spacing: 0.055px;
+  text-transform: uppercase;
+}
+
+.upgrade-button,
+.primary-pill,
+.add-track-button,
+.fx-pill,
+.auto-detect-button,
+.monitoring-row button,
+.panel-tabs button,
+.icon-button,
+.mini-icon-button,
+.round-tool,
+.close-panel,
+.metronome-button,
+.key-chip,
+.mastering-chip,
+.tempo-chip,
+.undo-redo,
+.transport-buttons,
+.track-toggles,
+.record-action,
+.drop-zone button,
+.effect-chain-button,
+.effect-toggle,
+.power-toggle,
+.toggle,
+.select-field,
+.input-alert,
+.record-track-summary,
+.record-state-grid span,
+.pitch-card,
+.input-section,
+.effect-chain,
+.effect-macro-strip,
+.mixer-strip,
+.audio-clip,
+.drop-zone {
+  border-radius: 4px;
+}
+
+.pitch-card,
+.input-section,
+.effect-chain,
+.effect-macro-strip,
+.track-card,
+.automation-row,
+.mixer-strip,
+.drop-zone,
+.audio-clip,
+.record-track-summary,
+.record-state-grid span,
+.select-field,
+.input-alert {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow: none;
+}
+
+.icon-button,
+.mini-icon-button,
+.round-tool,
+.close-panel,
+.metronome-button,
+.key-chip,
+.mastering-chip,
+.tempo-chip,
+.undo-redo,
+.transport-buttons,
+.track-toggles,
+.primary-pill,
+.add-track-button,
+.fx-pill,
+.auto-detect-button,
+.monitoring-row button,
+.panel-tabs button,
+.select-field,
+.record-state-grid span {
+  background: var(--glass-light);
+  color: var(--text);
+}
+
+.icon-button:hover,
+.mini-icon-button:hover,
+.round-tool:hover,
+.close-panel:hover,
+.metronome-button:hover,
+.key-chip:hover,
+.mastering-chip:hover,
+.panel-tabs button:hover,
+.effect-chain-button:hover,
+.drop-zone button:hover,
+.record-action:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.upgrade-button {
+  background: var(--dark-blue);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.primary-pill {
+  background: #ffffff;
+  color: var(--dark-blue);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.panel-tabs button.is-active,
+.effect-chain-button.is-selected,
+.toggle.is-on,
+.monitoring-row button.is-active,
+.key-grid button.is-selected,
+.preset-button.is-selected {
+  color: #ffffff;
+  border-color: rgba(189, 187, 255, 0.64);
+  background: rgba(189, 187, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(189, 187, 255, 0.12);
+}
+
+.record-button {
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.record-button:hover,
+.record-button.is-active {
+  background: rgba(189, 187, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(189, 187, 255, 0.38);
+}
+
+.record-action {
+  background:
+    linear-gradient(135deg, rgba(239, 44, 193, 0.22), rgba(189, 187, 255, 0.2), rgba(130, 170, 255, 0.14)),
+    rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(189, 187, 255, 0.34);
+  box-shadow: var(--blue-shadow);
+}
+
+.record-action span {
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(189, 187, 255, 0.16);
+}
+
+.record-action.is-recording {
+  background:
+    linear-gradient(135deg, rgba(239, 44, 193, 0.3), rgba(252, 76, 2, 0.22)),
+    rgba(255, 255, 255, 0.1);
+}
+
+.input-meter,
+.track-meter {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.track-meter i,
+.input-meter i {
+  background: linear-gradient(90deg, rgba(189, 187, 255, 0.95), rgba(255, 255, 255, 0.92));
+}
+
+.workspace-grid {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.sidebar {
+  border-right: 1px solid var(--line);
+}
+
+.track-card {
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.track-card.is-selected::after {
+  width: 2px;
+  background: var(--accent);
+}
+
+.record-dot {
+  border-color: var(--accent);
+}
+
+.timeline {
+  background: rgba(1, 1, 32, 0.72);
+}
+
+.timeline-scroll,
+.ruler,
+.arrangement {
+  background: rgba(1, 1, 32, 0.58);
+}
+
+.ruler,
+.bar-label,
+.record-region {
+  border-color: var(--line);
+}
+
+.bar-label.is-current {
+  color: #ffffff;
+  background: rgba(189, 187, 255, 0.18);
+}
+
+.grid-line {
+  border-left-color: rgba(255, 255, 255, 0.045);
+}
+
+.grid-line.is-bar {
+  border-left-color: rgba(255, 255, 255, 0.12);
+}
+
+.lane-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(90deg, rgba(189, 187, 255, 0.04), transparent 40%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.lane-row:nth-child(even) {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035), transparent 38%),
+    rgba(255, 255, 255, 0.015);
+}
+
+.lane-row::before {
+  border-right-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(1, 1, 32, 0.74), rgba(1, 1, 32, 0));
+}
+
+.lane-row-activity {
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(189, 187, 255, 0.24), rgba(255, 255, 255, 0.08));
+}
+
+.drop-zone {
+  border: 1px dashed rgba(189, 187, 255, 0.5);
+  background:
+    linear-gradient(135deg, rgba(239, 44, 193, 0.08), rgba(189, 187, 255, 0.08), rgba(130, 170, 255, 0.06)),
+    rgba(255, 255, 255, 0.06);
+}
+
+.drop-zone button {
+  border: 1px solid rgba(189, 187, 255, 0.38);
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 500;
+}
+
+.audio-clip {
+  border-color: rgba(189, 187, 255, 0.62);
+  background:
+    linear-gradient(135deg, rgba(189, 187, 255, 0.18), rgba(255, 255, 255, 0.08)),
+    rgba(1, 1, 32, 0.8);
+  box-shadow: var(--blue-shadow);
+}
+
+.audio-clip:hover,
+.audio-clip.is-selected {
+  border-color: #ffffff;
+  box-shadow:
+    0 0 0 2px rgba(189, 187, 255, 0.22),
+    var(--blue-shadow);
+}
+
+.playhead,
+.playhead span {
+  background: #ffffff;
+}
+
+.key-grid button,
+.preset-button,
+.compact-label select {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+
+.large-knob,
+.knob,
+.compressor-knob,
+.hardware-knob,
+.plate-knob,
+.tube-comp-knob,
+.rack-trim-knob {
+  filter: saturate(0.72) hue-rotate(16deg);
+}
+
+.effect-chain-led.is-on,
+.power-toggle.is-on,
+.rack-led.is-on {
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(189, 187, 255, 0.5);
+}
+
+.h-delay-panel,
+.plate-reverb-panel,
+.tube-compressor-panel,
+.analog-eq-panel {
+  border-radius: 8px;
+  box-shadow: var(--blue-shadow);
 }
