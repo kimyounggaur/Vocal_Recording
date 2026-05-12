@@ -58,6 +58,11 @@ export default function App() {
   const setRecordingError = useDawStore((state) => state.setRecordingError)
 
   const selectedTrack = tracks.find((track) => track.id === selectedTrackId) ?? tracks[0]
+  const isAudioImportDisabled =
+    transport.isRecording ||
+    recording.status === 'arming' ||
+    recording.status === 'recording' ||
+    recording.status === 'encoding'
   const recorder = useMicrophoneRecorder()
   const importAudioContextRef = useRef<AudioContext | null>(null)
   usePlaybackEngine()
@@ -231,6 +236,7 @@ export default function App() {
           onClearClipSelection={() => selectClip(null)}
           onDeleteSelectedClip={deleteSelectedClip}
           onImportAudioFiles={importAudioFiles}
+          isImportDisabled={isAudioImportDisabled}
           onMoveClip={moveClip}
           onSeekToBeat={seekToBeat}
           onSelectClip={selectClip}

@@ -104,6 +104,34 @@ function formatDb(value: number): string {
   return String(value)
 }
 
+function getRecordingReadinessMessage(recording: RecordingState): string {
+  if (recording.errorMessage) {
+    return recording.errorMessage
+  }
+
+  if (recording.status === 'recording') {
+    return 'Recording'
+  }
+
+  if (recording.status === 'encoding') {
+    return 'Creating Waveform'
+  }
+
+  if (recording.status === 'arming' || recording.permission === 'requesting') {
+    return 'Requesting microphone access'
+  }
+
+  if (recording.permission === 'granted') {
+    return 'Microphone ready'
+  }
+
+  if (recording.permission === 'denied') {
+    return 'Microphone permission denied'
+  }
+
+  return 'Microphone idle'
+}
+
 export function BottomPanel({
   autoPitch,
   inputDevices,
@@ -133,8 +161,9 @@ export function BottomPanel({
       : recording.status === 'arming'
         ? 'Preparing Mic'
         : recording.status === 'encoding'
-          ? 'Creating Clip'
+          ? 'Creating Waveform'
           : 'Record Voice'
+  const recordingReadinessMessage = getRecordingReadinessMessage(recording)
   const updateDelay = <K extends keyof DelaySettings>(key: K, value: DelaySettings[K]) => {
     onUpdateMixer(track.id, 'delay', {
       ...track.mixer.delay,
@@ -236,6 +265,10 @@ export function BottomPanel({
       <div className={`panel-content panel-content-${activePanel}`}>
         <aside className="input-section">
           <strong className="section-title">Input</strong>
+          <div className="record-track-summary">
+            <span>Selected Track</span>
+            <strong>{track.name}</strong>
+          </div>
           <label className="select-field">
             <span>Device</span>
             <select
@@ -281,15 +314,8 @@ export function BottomPanel({
             </button>
           </div>
 
-          <div className={recording.errorMessage ? 'input-alert is-error' : 'input-alert'}>
-            {recording.errorMessage ??
-              (recording.status === 'recording'
-                ? 'Recording'
-                : recording.status === 'encoding'
-                  ? 'Creating waveform'
-                  : recording.permission === 'granted'
-                    ? 'Microphone ready'
-                    : 'Microphone idle')}
+          <div className={recording.errorMessage || recording.permission === 'denied' ? 'input-alert is-error' : 'input-alert'}>
+            {recordingReadinessMessage}
           </div>
 
           <div className="record-control-card">

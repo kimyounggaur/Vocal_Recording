@@ -788,6 +788,11 @@ select {
   background: rgba(42, 199, 165, 0.22);
 }
 
+.drop-zone button:disabled {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -1010,9 +1015,9 @@ select {
 .input-section {
   align-self: start;
   display: grid;
-  width: min(560px, 100%);
-  gap: 10px;
-  padding: 14px;
+  width: min(640px, 100%);
+  gap: 12px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #151a1d;
@@ -1021,6 +1026,36 @@ select {
 .section-title {
   color: var(--text);
   font-size: 13px;
+}
+
+.record-track-summary {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #263039;
+  border-radius: 8px;
+  background: #101417;
+}
+
+.record-track-summary span,
+.record-track-summary strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.record-track-summary span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.record-track-summary strong {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 950;
 }
 
 .select-field {
@@ -1074,8 +1109,10 @@ select {
 
 .input-meter {
   display: block;
-  width: 108px;
-  height: 3px;
+  width: 150px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
   background: #293139;
 }
 
@@ -1121,17 +1158,18 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 68px;
   gap: 10px;
   border-radius: 8px;
   color: var(--text);
   background: linear-gradient(180deg, #313940, #20262b);
+  font-size: 16px;
   font-weight: 950;
 }
 
 .record-action span {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 4px rgba(255, 79, 63, 0.12);
@@ -1139,6 +1177,14 @@ select {
 
 .record-action.is-recording {
   background: linear-gradient(180deg, #ff5b4d, #c9251b);
+}
+
+.record-action:not(:disabled):hover {
+  background: linear-gradient(180deg, #3b454d, #252c32);
+}
+
+.record-action.is-recording:not(:disabled):hover {
+  background: linear-gradient(180deg, #ff6c5f, #d42d22);
 }
 
 .record-action.is-recording span {

@@ -24,6 +24,7 @@ type TimelineProps = {
   onTrimClipEnd: (clipId: string, durationBeats: number) => void
   onDeleteSelectedClip: () => void
   onImportAudioFiles: (files: File[], startBeat?: number) => void
+  isImportDisabled: boolean
   onToggleSnap: () => void
   onZoomIn: () => void
   onZoomOut: () => void
@@ -64,6 +65,7 @@ export function Timeline({
   onTrimClipEnd,
   onDeleteSelectedClip,
   onImportAudioFiles,
+  isImportDisabled,
   onToggleSnap,
   onZoomIn,
   onZoomOut,
@@ -109,9 +111,9 @@ export function Timeline({
     }
 
     event.preventDefault()
-    event.dataTransfer.dropEffect = 'copy'
-    setIsDraggingAudio(true)
-  }, [])
+    event.dataTransfer.dropEffect = isImportDisabled ? 'none' : 'copy'
+    setIsDraggingAudio(!isImportDisabled)
+  }, [isImportDisabled])
 
   const handleDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
     const nextTarget = event.relatedTarget
@@ -132,15 +134,20 @@ export function Timeline({
       event.preventDefault()
       event.stopPropagation()
       setIsDraggingAudio(false)
+
+      if (isImportDisabled) {
+        return
+      }
+
       onImportAudioFiles(Array.from(event.dataTransfer.files), getDropBeat(event))
     },
-    [getDropBeat, onImportAudioFiles],
+    [getDropBeat, isImportDisabled, onImportAudioFiles],
   )
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.currentTarget.files ?? [])
 
-    if (files.length > 0) {
+    if (files.length > 0 && !isImportDisabled) {
       onImportAudioFiles(files)
     }
 
@@ -234,6 +241,7 @@ export function Timeline({
           <button
             className="mini-icon-button"
             aria-label="Import audio"
+            disabled={isImportDisabled}
             onClick={() => fileInputRef.current?.click()}
           >
             <FileAudio size={16} />
@@ -313,6 +321,7 @@ export function Timeline({
             <input
               accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm,.flac"
               className="visually-hidden"
+              disabled={isImportDisabled}
               onChange={handleFileSelect}
               ref={fileInputRef}
               type="file"
@@ -331,9 +340,9 @@ export function Timeline({
               <div className="drop-zone">
                 <FileAudio size={28} />
                 <strong>Drop audio here or start recording</strong>
-                <span>Imported audio lands at the playhead. Use Record in the lower panel for a vocal take.</span>
-                <button type="button" onClick={() => fileInputRef.current?.click()}>
-                  Browse audio
+                <span>Recorded takes and imported files appear here as waveforms.</span>
+                <button disabled={isImportDisabled} type="button" onClick={() => fileInputRef.current?.click()}>
+                  Browse Audio
                 </button>
               </div>
             ) : null}
