@@ -5,6 +5,7 @@ import { useDawStore } from '../state/useDawStore'
 export function usePlaybackEngine() {
   const transport = useDawStore((state) => state.transport)
   const tracks = useDawStore((state) => state.tracks)
+  const mastering = useDawStore((state) => state.mastering)
   const setTransportPosition = useDawStore((state) => state.setTransportPosition)
   const finishPlaybackTransport = useDawStore((state) => state.finishPlaybackTransport)
   const lastPlayingRef = useRef(false)
@@ -12,6 +13,10 @@ export function usePlaybackEngine() {
   useEffect(() => {
     playbackEngine.updateMixer(tracks)
   }, [tracks])
+
+  useEffect(() => {
+    playbackEngine.updateMastering(mastering)
+  }, [mastering])
 
   useEffect(() => {
     if (!transport.isPlaying || transport.isRecording) {
@@ -33,6 +38,7 @@ export function usePlaybackEngine() {
       clips: state.clips,
       audioBlobs: state.audioBlobs,
       tracks: state.tracks,
+      mastering: state.mastering,
     })
   }, [transport.isPlaying, transport.isRecording])
 

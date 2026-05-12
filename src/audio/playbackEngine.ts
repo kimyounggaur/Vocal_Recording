@@ -1,4 +1,5 @@
-import type { AudioClip, Track } from '../types/daw'
+import type { AudioClip, MasteringState, Track } from '../types/daw'
+import { getMasterVolumeGain, MASTERING_PRESETS } from '../utils/mastering'
 import { beatToSeconds } from '../utils/time'
 
 type PlaybackSnapshot = {
@@ -7,6 +8,15 @@ type PlaybackSnapshot = {
   clips: AudioClip[]
   audioBlobs: Record<string, Blob>
   tracks: Track[]
+  mastering: MasteringState
+}
+
+type MasterNodes = {
+  input: GainNode
+  lowShelf: BiquadFilterNode
+  highShelf: BiquadFilterNode
+  compressor: DynamicsCompressorNode
+  output: GainNode
 }
 
 type TrackNodes = {
@@ -89,6 +99,8 @@ function getReverbDriveGain(drive: number): number {
 class PlaybackEngine {
   private audioContext: AudioContext | null = null
 
+  private masterNodes: MasterNodes | null = null
+
   private bufferCache = new Map<string, AudioBuffer>()
 
   private trackNodes = new Map<string, TrackNodes>()
@@ -136,6 +148,7 @@ class PlaybackEngine {
     this.playbackEndSeconds = snapshot.playheadSeconds
     this.isPlaying = true
 
+    this.updateMastering(snapshot.mastering)
     this.ensureTrackNodes(snapshot.tracks)
     this.updateMixer(snapshot.tracks)
 
@@ -249,12 +262,68 @@ class PlaybackEngine {
     }
   }
 
+  updateMastering(mastering: MasteringState): void {
+    const nodes = this.ensureMasterNodes()
+    const preset = MASTERING_PRESETS[mastering.presetId]
+    const contextTime = this.getContext().currentTime
+    const outputGain = getMasterVolumeGain(mastering.volume) * Math.pow(10, (mastering.enabled ? preset.outputGainDb : 0) / 20)
+
+    nodes.lowShelf.gain.setTargetAtTime(mastering.enabled ? preset.lowShelfGain : 0, contextTime, 0.02)
+    nodes.highShelf.gain.setTargetAtTime(mastering.enabled ? preset.highShelfGain : 0, contextTime, 0.02)
+    nodes.compressor.threshold.setTargetAtTime(mastering.enabled ? preset.threshold : 0, contextTime, 0.02)
+    nodes.compressor.ratio.setTargetAtTime(mastering.enabled ? preset.ratio : 1, contextTime, 0.02)
+    nodes.compressor.attack.setTargetAtTime(mastering.enabled ? preset.attack : 0.003, contextTime, 0.02)
+    nodes.compressor.release.setTargetAtTime(mastering.enabled ? preset.release : 0.25, contextTime, 0.02)
+    nodes.compressor.knee.setTargetAtTime(mastering.enabled ? 20 : 0, contextTime, 0.02)
+    nodes.output.gain.setTargetAtTime(outputGain, contextTime, 0.01)
+  }
+
   private getContext(): AudioContext {
     if (!this.audioContext) {
       this.audioContext = new AudioContext()
     }
 
     return this.audioContext
+  }
+
+  private ensureMasterNodes(): MasterNodes {
+    if (this.masterNodes) {
+      return this.masterNodes
+    }
+
+    const context = this.getContext()
+    const input = context.createGain()
+    const lowShelf = context.createBiquadFilter()
+    const highShelf = context.createBiquadFilter()
+    const compressor = context.createDynamicsCompressor()
+    const output = context.createGain()
+
+    lowShelf.type = 'lowshelf'
+    lowShelf.frequency.value = 120
+    highShelf.type = 'highshelf'
+    highShelf.frequency.value = 7200
+    compressor.threshold.value = -16
+    compressor.ratio.value = 2
+    compressor.knee.value = 20
+    compressor.attack.value = 0.018
+    compressor.release.value = 0.18
+    output.gain.value = 1
+
+    input.connect(lowShelf)
+    lowShelf.connect(highShelf)
+    highShelf.connect(compressor)
+    compressor.connect(output)
+    output.connect(context.destination)
+
+    this.masterNodes = {
+      input,
+      lowShelf,
+      highShelf,
+      compressor,
+      output,
+    }
+
+    return this.masterNodes
   }
 
   private async scheduleClip(
@@ -334,6 +403,7 @@ class PlaybackEngine {
 
   private ensureTrackNodes(tracks: Track[]): void {
     const context = this.getContext()
+    const masterNodes = this.ensureMasterNodes()
 
     for (const track of tracks) {
       if (this.trackNodes.has(track.id)) {
@@ -428,7 +498,7 @@ class PlaybackEngine {
       reverbEq.connect(reverbWet)
       reverbWet.connect(pan)
       pan.connect(output)
-      output.connect(context.destination)
+      output.connect(masterNodes.input)
 
       this.trackNodes.set(track.id, {
         input,

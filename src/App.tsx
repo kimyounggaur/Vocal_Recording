@@ -19,6 +19,7 @@ export default function App() {
   const selectedTrackId = useDawStore((state) => state.selectedTrackId)
   const selectedClipId = useDawStore((state) => state.selectedClipId)
   const autopitch = useDawStore((state) => state.autopitch)
+  const mastering = useDawStore((state) => state.mastering)
   const inputDevices = useDawStore((state) => state.inputDevices)
   const inputChannels = useDawStore((state) => state.inputChannels)
   const selectedInputDeviceId = useDawStore((state) => state.selectedInputDeviceId)
@@ -44,6 +45,9 @@ export default function App() {
   const updateAutoPitch = useDawStore((state) => state.updateAutoPitch)
   const toggleAutoPitch = useDawStore((state) => state.toggleAutoPitch)
   const detectProjectKey = useDawStore((state) => state.detectProjectKey)
+  const updateMastering = useDawStore((state) => state.updateMastering)
+  const setMasteringPreset = useDawStore((state) => state.setMasteringPreset)
+  const toggleMastering = useDawStore((state) => state.toggleMastering)
   const setInputDevice = useDawStore((state) => state.setInputDevice)
   const setInputChannel = useDawStore((state) => state.setInputChannel)
   const toggleMonitoring = useDawStore((state) => state.toggleMonitoring)
@@ -70,6 +74,34 @@ export default function App() {
   useEffect(() => {
     void restoreLastProject()
   }, [restoreLastProject])
+
+  useEffect(() => {
+    const handleSaveShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') {
+        return
+      }
+
+      event.preventDefault()
+      const state = useDawStore.getState()
+      const isLocked =
+        state.persistence.isSaving ||
+        state.persistence.isRestoring ||
+        state.transport.isRecording ||
+        state.recording.status === 'arming' ||
+        state.recording.status === 'recording' ||
+        state.recording.status === 'encoding'
+
+      if (!isLocked) {
+        void state.saveProject()
+      }
+    }
+
+    window.addEventListener('keydown', handleSaveShortcut)
+
+    return () => {
+      window.removeEventListener('keydown', handleSaveShortcut)
+    }
+  }, [])
 
   useEffect(() => {
     const preventBrowserFileOpen = (event: DragEvent) => {
@@ -211,10 +243,14 @@ export default function App() {
         onReturnToStart={returnToStart}
         onSave={saveProject}
         onSetBpm={setProjectBpm}
+        onSetMasteringPreset={setMasteringPreset}
+        onSetMasterVolume={(volume) => updateMastering('volume', volume)}
         onSetProjectKey={setProjectKey}
         onStop={handleStop}
+        onToggleMastering={toggleMastering}
         onTogglePlay={togglePlay}
         onToggleRecord={recorder.toggleRecording}
+        mastering={mastering}
         persistence={persistence}
         project={project}
         recordingStatus={recording.status}

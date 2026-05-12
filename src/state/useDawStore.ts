@@ -7,6 +7,8 @@ import type {
   EqSettings,
   InputChannel,
   InputDevice,
+  MasteringPresetId,
+  MasteringState,
   MixerState,
   PersistenceState,
   PitchKey,
@@ -31,6 +33,7 @@ import { beatToSeconds, clamp, MAX_BPM, MIN_BPM, secondsToBeat, snapBeatToGrid }
 
 type MixerKey = keyof MixerState
 type AutoPitchKey = keyof AutoPitchSettings
+type MasteringKey = keyof MasteringState
 
 const defaultDelaySettings: DelaySettings = {
   enabled: false,
@@ -96,6 +99,7 @@ type DawState = {
   selectedTrackId: string
   selectedClipId: string | null
   autopitch: AutoPitchSettings
+  mastering: MasteringState
   inputDevices: InputDevice[]
   inputChannels: InputChannel[]
   selectedInputDeviceId: string
@@ -126,6 +130,9 @@ type DawState = {
   updateAutoPitch: <K extends AutoPitchKey>(key: K, value: AutoPitchSettings[K]) => void
   toggleAutoPitch: () => void
   detectProjectKey: () => void
+  updateMastering: <K extends MasteringKey>(key: K, value: MasteringState[K]) => void
+  setMasteringPreset: (presetId: MasteringPresetId) => void
+  toggleMastering: () => void
   addRecordedClip: (clip: AudioClip, blob: Blob) => void
   moveClip: (clipId: string, startBeat: number) => void
   trimClipStart: (clipId: string, startBeat: number) => void
@@ -196,6 +203,12 @@ const initialAutoPitch: AutoPitchSettings = {
   amount: 64,
 }
 
+const initialMastering: MasteringState = {
+  enabled: true,
+  presetId: 'studio',
+  volume: 78,
+}
+
 const initialRecording: RecordingState = {
   permission: 'idle',
   status: 'idle',
@@ -247,6 +260,7 @@ export const useDawStore = create<DawState>((set, get) => ({
   selectedTrackId: defaultTrack.id,
   selectedClipId: null,
   autopitch: initialAutoPitch,
+  mastering: initialMastering,
   inputDevices,
   inputChannels,
   selectedInputDeviceId: inputDevices[0].id,
@@ -421,6 +435,7 @@ export const useDawStore = create<DawState>((set, get) => ({
         tracks: state.tracks,
         clips: state.clips.map(toPersistedClip),
         autopitch: state.autopitch,
+        mastering: state.mastering,
         timeline: state.timeline,
         selectedTrackId: state.selectedTrackId,
         selectedClipId: state.selectedClipId,
@@ -508,6 +523,10 @@ export const useDawStore = create<DawState>((set, get) => ({
         selectedTrackId: nextSelectedTrackId,
         selectedClipId: nextSelectedClipId,
         autopitch: persistedProject.autopitch,
+        mastering: {
+          ...initialMastering,
+          ...persistedProject.mastering,
+        },
         timeline: persistedProject.timeline,
         transport: {
           ...transport,
@@ -584,6 +603,28 @@ export const useDawStore = create<DawState>((set, get) => ({
         ...autopitch,
         key: project.key.split(' ')[0] as PitchKey,
         scale: project.key.endsWith('Minor') ? 'Minor' : 'Major',
+      },
+    })),
+  updateMastering: (key, value) =>
+    set(({ mastering }) => ({
+      mastering: {
+        ...mastering,
+        [key]: value,
+      },
+    })),
+  setMasteringPreset: (presetId) =>
+    set(({ mastering }) => ({
+      mastering: {
+        ...mastering,
+        enabled: true,
+        presetId,
+      },
+    })),
+  toggleMastering: () =>
+    set(({ mastering }) => ({
+      mastering: {
+        ...mastering,
+        enabled: !mastering.enabled,
       },
     })),
   addRecordedClip: (clip, blob) =>

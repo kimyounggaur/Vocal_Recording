@@ -15,8 +15,17 @@ import {
   Square,
   Volume2,
 } from 'lucide-react'
-import type { PersistenceState, Project, ProjectKey, TransportState } from '../types/daw'
+import { useState } from 'react'
+import type {
+  MasteringPresetId,
+  MasteringState,
+  PersistenceState,
+  Project,
+  ProjectKey,
+  TransportState,
+} from '../types/daw'
 import type { RecordingStatus } from '../types/daw'
+import { formatMasterVolumeDb, MASTERING_PRESETS } from '../utils/mastering'
 import { formatTransportTime, MAX_BPM, MIN_BPM } from '../utils/time'
 
 type TopBarProps = {
@@ -24,13 +33,17 @@ type TopBarProps = {
   transport: TransportState
   recordingStatus: RecordingStatus
   persistence: PersistenceState
+  mastering: MasteringState
   onTogglePlay: () => void
   onToggleRecord: () => void | Promise<void>
   onStop: () => void
   onReturnToStart: () => void
-  onSave: () => void
+  onSave: () => void | Promise<void>
   onSetBpm: (bpm: number) => void
   onSetProjectKey: (key: ProjectKey) => void
+  onSetMasteringPreset: (presetId: MasteringPresetId) => void
+  onSetMasterVolume: (volume: number) => void
+  onToggleMastering: () => void
 }
 
 const projectKeys: ProjectKey[] = [
@@ -46,11 +59,14 @@ const projectKeys: ProjectKey[] = [
   'E Minor',
 ]
 
+const masteringPresetOptions = Object.values(MASTERING_PRESETS)
+
 export function TopBar({
   project,
   transport,
   recordingStatus,
   persistence,
+  mastering,
   onTogglePlay,
   onToggleRecord,
   onStop,
@@ -58,11 +74,18 @@ export function TopBar({
   onSave,
   onSetBpm,
   onSetProjectKey,
+  onSetMasteringPreset,
+  onSetMasterVolume,
+  onToggleMastering,
 }: TopBarProps) {
+  const [isMasteringOpen, setIsMasteringOpen] = useState(false)
   const [beats, noteValue] = project.timeSignature
   const isRecordingBusy = recordingStatus === 'arming' || recordingStatus === 'encoding'
   const isTransportLocked = transport.isRecording || isRecordingBusy
   const isSaveDisabled = persistence.isSaving || persistence.isRestoring || isTransportLocked
+  const activePreset = MASTERING_PRESETS[mastering.presetId]
+  const masteringSummary = mastering.enabled ? activePreset.label : 'Bypassed'
+  const saveLabel = persistence.isSaving ? 'Saving...' : 'Save'
 
   return (
     <header className="topbar">
@@ -85,16 +108,21 @@ export function TopBar({
       </section>
 
       <section className="save-cluster" aria-label="Save status">
-        <span className="save-state">
+        <span className="save-state" aria-live="polite">
           <small>Last Saved</small>
           <strong>
             {persistence.isRestoring ? 'Restoring...' : persistence.isSaving ? 'Saving...' : project.lastSaved}
           </strong>
           {persistence.errorMessage ? <em>{persistence.errorMessage}</em> : null}
         </span>
-        <button className="primary-pill" disabled={isSaveDisabled} onClick={onSave}>
+        <button
+          className="primary-pill save-button"
+          disabled={isSaveDisabled}
+          onClick={() => void onSave()}
+          title="Save project locally (Ctrl+S)"
+        >
           <Save size={17} />
-          Save
+          {saveLabel}
         </button>
       </section>
 
@@ -174,19 +202,67 @@ export function TopBar({
           <div className="time-display">{formatTransportTime(transport.currentTimeSeconds)}</div>
         </div>
 
-        <button className="mastering-chip">
-          <Settings2 size={17} />
-          <span>
-            <strong>Mastering</strong>
-            <small>Studio Preset</small>
-          </span>
-          <ChevronDown size={15} />
-        </button>
+        <div className="mastering-control">
+          <button
+            aria-expanded={isMasteringOpen}
+            className={mastering.enabled ? 'mastering-chip is-active' : 'mastering-chip'}
+            onClick={() => setIsMasteringOpen((isOpen) => !isOpen)}
+            type="button"
+          >
+            <Settings2 size={17} />
+            <span>
+              <strong>Mastering</strong>
+              <small>{masteringSummary}</small>
+            </span>
+            <ChevronDown size={15} />
+          </button>
+          {isMasteringOpen ? (
+            <div className="mastering-popover" role="menu">
+              <div className="mastering-popover-head">
+                <span>
+                  <strong>Mastering</strong>
+                  <small>{mastering.enabled ? activePreset.description : 'Master chain bypassed'}</small>
+                </span>
+                <button
+                  className={mastering.enabled ? 'mastering-bypass is-on' : 'mastering-bypass'}
+                  onClick={onToggleMastering}
+                  type="button"
+                >
+                  {mastering.enabled ? 'On' : 'Off'}
+                </button>
+              </div>
+              <div className="mastering-preset-list">
+                {masteringPresetOptions.map((preset) => (
+                  <button
+                    className={preset.id === mastering.presetId && mastering.enabled ? 'is-selected' : ''}
+                    key={preset.id}
+                    onClick={() => {
+                      onSetMasteringPreset(preset.id)
+                      setIsMasteringOpen(false)
+                    }}
+                    role="menuitem"
+                    type="button"
+                  >
+                    <strong>{preset.label}</strong>
+                    <small>{preset.description}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <div className="master-volume">
           <Volume2 size={18} />
-          <input aria-label="Master volume" defaultValue={78} max={100} min={0} type="range" />
-          <strong>+0.0 dB</strong>
+          <input
+            aria-label="Master volume"
+            max={100}
+            min={0}
+            onChange={(event) => onSetMasterVolume(Number(event.currentTarget.value))}
+            type="range"
+            value={mastering.volume}
+          />
+          <strong>{formatMasterVolumeDb(mastering.volume)}</strong>
         </div>
       </section>
     </header>

@@ -1,4 +1,11 @@
-import type { AudioClip, AutoPitchSettings, Project, TimelineState, Track } from '../types/daw'
+import type {
+  AudioClip,
+  AutoPitchSettings,
+  MasteringState,
+  Project,
+  TimelineState,
+  Track,
+} from '../types/daw'
 
 const DATABASE_NAME = 'voice-track-daw'
 const DATABASE_VERSION = 1
@@ -14,6 +21,7 @@ export type PersistedProjectState = {
   tracks: Track[]
   clips: PersistedAudioClip[]
   autopitch: AutoPitchSettings
+  mastering?: MasteringState
   timeline: TimelineState
   selectedTrackId: string
   selectedClipId: string | null

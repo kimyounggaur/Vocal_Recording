@@ -38,6 +38,14 @@ export type PitchKey =
 
 export type EqBand = 'low' | 'lowMid' | 'mid' | 'highMid' | 'high'
 
+export type MasteringPresetId = 'studio' | 'warm' | 'bright' | 'loud' | 'speech'
+
+export type MasteringState = {
+  enabled: boolean
+  presetId: MasteringPresetId
+  volume: number
+}
+
 export type DelaySettings = {
   enabled: boolean
   loFi: boolean
