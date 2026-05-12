@@ -104,6 +104,10 @@ function formatDb(value: number): string {
   return String(value)
 }
 
+function formatEqFrequencyLabel(label: string): string {
+  return label.endsWith('k') ? `${label.slice(0, -1)} kHz` : `${label} Hz`
+}
+
 function getRecordingReadinessMessage(recording: RecordingState): string {
   if (recording.errorMessage) {
     return recording.errorMessage
@@ -995,30 +999,104 @@ export function BottomPanel({
             </aside>
           </article>
 
-          <article className={activeEffect === 'eq' ? 'effect-card eq-card' : 'effect-card eq-card is-effect-hidden'}>
-            <div className="effect-card-head">
-              <span>
-                <SlidersHorizontal size={14} />
-                Graphic EQ
-              </span>
-              <small>dB</small>
+          <article
+            className={activeEffect === 'eq' ? 'analog-eq-panel' : 'analog-eq-panel is-effect-hidden'}
+            aria-label="Graphic EQ"
+          >
+            <div className="analog-eq-toolbar" aria-hidden="true">
+              <span />
+              <button type="button">-</button>
+              <button type="button">+</button>
+              <button type="button">↺</button>
+              <button type="button">C</button>
+              <strong>A</strong>
+              <button type="button">⇄</button>
+              <button type="button">B</button>
+              <em>&gt; Vocal Default</em>
+              <button type="button">▣</button>
+              <button type="button">⌫</button>
             </div>
-            <div className="eq-bands" aria-label="Graphic EQ bands">
-              {eqBands.map((band) => (
-                <label className="eq-band" key={band.key}>
-                  <small>{formatDb(track.mixer.eqBands[band.key])}</small>
-                  <input
-                    aria-label={`EQ ${band.label}`}
-                    aria-orientation="vertical"
-                    max={12}
-                    min={-12}
-                    onChange={(event) => updateEqBand(band.key, Number(event.currentTarget.value))}
-                    type="range"
-                    value={track.mixer.eqBands[band.key]}
-                  />
-                  <strong>{band.label}</strong>
-                </label>
-              ))}
+
+            <div className="analog-eq-body">
+              <aside className="analog-eq-meter-card">
+                <strong>INPUT</strong>
+                <span className="rack-trim-knob" aria-hidden="true" />
+                <div className="rack-led-meter" aria-hidden="true">
+                  <i style={{ height: `${Math.max(12, track.mixer.volume)}%` }} />
+                  <i style={{ height: `${Math.max(10, track.mixer.volume - 8)}%` }} />
+                  <small>-1</small>
+                  <small>-18</small>
+                  <small>-30</small>
+                  <small>-48</small>
+                </div>
+              </aside>
+
+              <section className="analog-eq-main">
+                <div className="analog-eq-brand">
+                  <strong>Studio Rack</strong>
+                  <span>VOICE CIRCUITS</span>
+                </div>
+
+                <div className="analog-eq-fader-bay" aria-label="Graphic EQ bands">
+                  <label className="analog-eq-level">
+                    <strong>LEVEL</strong>
+                    <span className="analog-eq-db-scale" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    <input aria-label="EQ level reference" defaultValue={0} disabled max={12} min={-12} type="range" />
+                    <small>0.0 dB</small>
+                  </label>
+                  {eqBands.map((band) => (
+                    <label className="analog-eq-band" key={band.key}>
+                      <strong>{formatEqFrequencyLabel(band.label)}</strong>
+                      <span className="analog-eq-db-scale" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                      <input
+                        aria-label={`EQ ${band.label}`}
+                        aria-orientation="vertical"
+                        max={12}
+                        min={-12}
+                        onChange={(event) => updateEqBand(band.key, Number(event.currentTarget.value))}
+                        type="range"
+                        value={track.mixer.eqBands[band.key]}
+                      />
+                      <small>{formatDb(track.mixer.eqBands[band.key])}.0 dB</small>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="analog-eq-footer">
+                  <strong>Vocal Equalizer</strong>
+                  <div>
+                    <span className={Object.values(track.mixer.eqBands).some((value) => value !== 0) ? 'rack-led is-on' : 'rack-led'} />
+                    <small>ANALOG</small>
+                    <span className="rack-power-lamp is-on" />
+                    <small>POWER</small>
+                  </div>
+                </div>
+              </section>
+
+              <aside className="analog-eq-meter-card">
+                <strong>OUTPUT</strong>
+                <span className="rack-trim-knob" aria-hidden="true" />
+                <div className="rack-led-meter" aria-hidden="true">
+                  <i style={{ height: `${Math.max(12, track.mixer.muted ? 0 : track.mixer.volume)}%` }} />
+                  <i style={{ height: `${Math.max(10, track.mixer.muted ? 0 : track.mixer.volume - 10)}%` }} />
+                  <small>-1</small>
+                  <small>-18</small>
+                  <small>-30</small>
+                  <small>-48</small>
+                </div>
+              </aside>
             </div>
           </article>
 
