@@ -1,11 +1,45 @@
-import { FileAudio, Magnet, Search, ZoomIn, ZoomOut } from 'lucide-react'
+import { FileAudio, Search, ZoomOut } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, MouseEvent } from 'react'
+import deleteIcon from '../assets/track-icons/flicon_delete.png'
+import menuIcon from '../assets/track-icons/flicon_menu.png'
+import muteIcon from '../assets/track-icons/flicon_mute.png'
+import paintIcon from '../assets/track-icons/flicon_paint.png'
+import drawIcon from '../assets/track-icons/flicon_pencilup.png'
+import playIcon from '../assets/track-icons/flicon_play.png'
+import playSelectedIcon from '../assets/track-icons/flicon_playback.png'
+import selectIcon from '../assets/track-icons/flicon_select.png'
+import sliceIcon from '../assets/track-icons/flicon_slice.png'
+import slipIcon from '../assets/track-icons/flicon_slip.png'
+import snapIcon from '../assets/track-icons/flicon_snap.png'
+import zoomIcon from '../assets/track-icons/flicon_zoom.png'
 import type { AudioClip, TimeSignature } from '../types/daw'
 import { beatToPixels, getBarNumber, getBeatInBar, getBeatsPerBar, pixelsToBeat } from '../utils/time'
 import { TimelineClip } from './TimelineClip'
 
 type ClipEditMode = 'move' | 'trim-start' | 'trim-end'
+
+type TrackToolId =
+  | 'menu'
+  | 'select'
+  | 'draw'
+  | 'paint'
+  | 'delete'
+  | 'mute'
+  | 'slip'
+  | 'slice'
+  | 'snap'
+  | 'zoom'
+  | 'play-selected'
+  | 'play'
+
+type TrackTool = {
+  id: TrackToolId
+  label: string
+  shortcut: string
+  description: string
+  icon: string
+}
 
 type TimelineProps = {
   bars: number
@@ -25,9 +59,11 @@ type TimelineProps = {
   onDeleteSelectedClip: () => void
   onImportAudioFiles: (files: File[], startBeat?: number) => void
   isImportDisabled: boolean
+  isPlaying: boolean
   onToggleSnap: () => void
   onZoomIn: () => void
   onZoomOut: () => void
+  onTogglePlay: () => void
 }
 
 type ClipEditSession = {
@@ -48,6 +84,93 @@ const emptyLaneRows = [
   'Master Notes',
 ]
 
+const trackTools: TrackTool[] = [
+  {
+    id: 'menu',
+    label: 'Tool Guide',
+    shortcut: 'Menu',
+    description: 'Open the track tool guide and review the available editing modes.',
+    icon: menuIcon,
+  },
+  {
+    id: 'select',
+    label: 'Select',
+    shortcut: 'E',
+    description: 'Click clips or drag across the lane to make a selection. Hold Shift to add or remove clips.',
+    icon: selectIcon,
+  },
+  {
+    id: 'draw',
+    label: 'Draw',
+    shortcut: 'P',
+    description: 'Add the selected clip with a click, drag before release to position it, or hold Alt to draw with snap off.',
+    icon: drawIcon,
+  },
+  {
+    id: 'paint',
+    label: 'Paint',
+    shortcut: 'B',
+    description: 'Paint repeated clips by dragging across the lane. Hold Shift to copy the selected clip.',
+    icon: paintIcon,
+  },
+  {
+    id: 'delete',
+    label: 'Delete',
+    shortcut: 'D',
+    description: 'Delete the selected clip, or use Delete/Backspace after selecting clips on the timeline.',
+    icon: deleteIcon,
+  },
+  {
+    id: 'mute',
+    label: 'Mute Clip',
+    shortcut: 'T',
+    description: 'Mute individual clips independently of the track mute switch. This mode is prepared for clip-level mute editing.',
+    icon: muteIcon,
+  },
+  {
+    id: 'slip',
+    label: 'Slip Edit',
+    shortcut: 'S',
+    description: 'Slide clip content left or right while keeping the clip start and end points in place.',
+    icon: slipIcon,
+  },
+  {
+    id: 'slice',
+    label: 'Slice',
+    shortcut: 'C',
+    description: 'Slice clips vertically at the edit point. Hold Shift in DAW-style workflows for alternate slice behavior.',
+    icon: sliceIcon,
+  },
+  {
+    id: 'snap',
+    label: 'Track Snap',
+    shortcut: 'Alt: temporary off',
+    description: 'Toggle grid snap so clip moves and trims align to the beat grid.',
+    icon: snapIcon,
+  },
+  {
+    id: 'zoom',
+    label: 'Zoom to Selection',
+    shortcut: 'Shift+Z',
+    description: 'Zoom toward the selected content or current timeline area for closer editing.',
+    icon: zoomIcon,
+  },
+  {
+    id: 'play-selected',
+    label: 'Play Selected',
+    shortcut: 'Y',
+    description: 'Move the playhead to the selected clip and start playback from that take.',
+    icon: playSelectedIcon,
+  },
+  {
+    id: 'play',
+    label: 'Play / Pause',
+    shortcut: 'Space',
+    description: 'Start or pause timeline playback. Right-click behavior from desktop DAWs is represented by the Stop control.',
+    icon: playIcon,
+  },
+]
+
 export function Timeline({
   bars,
   bpm,
@@ -66,14 +189,18 @@ export function Timeline({
   onDeleteSelectedClip,
   onImportAudioFiles,
   isImportDisabled,
+  isPlaying,
   onToggleSnap,
   onZoomIn,
   onZoomOut,
+  onTogglePlay,
 }: TimelineProps) {
   const arrangementRef = useRef<HTMLDivElement | null>(null)
   const editSessionRef = useRef<ClipEditSession | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [isDraggingAudio, setIsDraggingAudio] = useState(false)
+  const [activeTrackToolId, setActiveTrackToolId] = useState<TrackToolId>('select')
+  const [openTrackToolId, setOpenTrackToolId] = useState<TrackToolId | null>(null)
   const beatsPerBar = getBeatsPerBar(timeSignature)
   const barItems = Array.from({ length: bars }, (_, index) => index + 1)
   const gridColumns = bars * beatsPerBar * subdivisions
@@ -83,6 +210,8 @@ export function Timeline({
   const playheadX = beatToPixels(Math.min(currentBeat, totalBeats), pixelsPerBeat)
   const currentBar = getBarNumber(currentBeat, timeSignature)
   const currentBeatInBar = getBeatInBar(currentBeat, timeSignature)
+  const selectedClip = clips.find((clip) => clip.id === selectedClipId) ?? null
+  const openTrackTool = trackTools.find((tool) => tool.id === openTrackToolId) ?? null
 
   const handleSeek = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) {
@@ -152,6 +281,46 @@ export function Timeline({
     }
 
     event.currentTarget.value = ''
+  }
+
+  const handleTrackToolClick = (tool: TrackTool) => {
+    setOpenTrackToolId(tool.id)
+
+    if (tool.id !== 'menu' && tool.id !== 'snap' && tool.id !== 'zoom' && tool.id !== 'play' && tool.id !== 'play-selected') {
+      setActiveTrackToolId(tool.id)
+    }
+
+    if (tool.id === 'snap') {
+      onToggleSnap()
+      return
+    }
+
+    if (tool.id === 'zoom') {
+      onZoomIn()
+      return
+    }
+
+    if (tool.id === 'delete') {
+      if (selectedClipId) {
+        onDeleteSelectedClip()
+      }
+      return
+    }
+
+    if (tool.id === 'play-selected') {
+      if (selectedClip) {
+        onSeekToBeat(selectedClip.startBeat)
+      }
+
+      if (!isPlaying) {
+        onTogglePlay()
+      }
+      return
+    }
+
+    if (tool.id === 'play') {
+      onTogglePlay()
+    }
   }
 
   const handleEditStart = useCallback((clip: AudioClip, mode: ClipEditMode, pointerX: number) => {
@@ -237,6 +406,38 @@ export function Timeline({
           </span>
           <span>{clips.length} clips</span>
         </div>
+        <div className="track-tool-palette" aria-label="Track edit tools">
+          {trackTools.map((tool) => {
+            const isActive =
+              tool.id === activeTrackToolId ||
+              (tool.id === 'snap' && snapToGrid) ||
+              (tool.id === 'play' && isPlaying)
+            const buttonClassName = isActive ? 'track-tool-button is-active' : 'track-tool-button'
+
+            return (
+              <button
+                aria-label={`${tool.label} (${tool.shortcut})`}
+                aria-pressed={isActive}
+                className={buttonClassName}
+                disabled={(tool.id === 'play' || tool.id === 'play-selected') && isImportDisabled}
+                key={tool.id}
+                onClick={() => handleTrackToolClick(tool)}
+                onFocus={() => setOpenTrackToolId(tool.id)}
+                title={`${tool.label}: ${tool.description}`}
+                type="button"
+              >
+                <img alt="" src={tool.icon} />
+              </button>
+            )
+          })}
+          {openTrackTool ? (
+            <div className="track-tool-popover" role="status">
+              <strong>{openTrackTool.label}</strong>
+              <span>{openTrackTool.shortcut}</span>
+              <p>{openTrackTool.description}</p>
+            </div>
+          ) : null}
+        </div>
         <div className="timeline-tool-buttons">
           <button
             className="mini-icon-button"
@@ -246,18 +447,8 @@ export function Timeline({
           >
             <FileAudio size={16} />
           </button>
-          <button
-            className={snapToGrid ? 'mini-icon-button is-active' : 'mini-icon-button'}
-            aria-label="Snap to grid"
-            onClick={onToggleSnap}
-          >
-            <Magnet size={16} />
-          </button>
           <button className="mini-icon-button" aria-label="Zoom out" onClick={onZoomOut}>
             <ZoomOut size={16} />
-          </button>
-          <button className="mini-icon-button" aria-label="Zoom in" onClick={onZoomIn}>
-            <ZoomIn size={16} />
           </button>
           <button className="mini-icon-button" aria-label="Search timeline">
             <Search size={16} />

@@ -4440,3 +4440,113 @@ body {
 input[type="range"] {
   accent-color: var(--accent);
 }
+
+.timeline-tools {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.track-tool-palette {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: var(--ring-shadow);
+}
+
+.track-tool-button {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.track-tool-button img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  opacity: 0.78;
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.track-tool-button:hover,
+.track-tool-button:focus-visible,
+.track-tool-button.is-active {
+  border-color: var(--accent);
+  background: rgba(91, 118, 254, 0.1);
+  outline: 0;
+}
+
+.track-tool-button:hover img,
+.track-tool-button:focus-visible img,
+.track-tool-button.is-active img {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.track-tool-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.track-tool-popover {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  z-index: 18;
+  display: grid;
+  width: 330px;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--text);
+  background:
+    linear-gradient(135deg, rgba(255, 216, 244, 0.58), rgba(255, 255, 255, 0.94) 48%),
+    #ffffff;
+  box-shadow:
+    0 18px 44px rgba(85, 90, 106, 0.18),
+    var(--ring-shadow);
+}
+
+.track-tool-popover strong,
+.track-tool-popover span,
+.track-tool-popover p {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-tool-popover strong {
+  font-size: 13px;
+}
+
+.track-tool-popover span {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.track-tool-popover p {
+  display: -webkit-box;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}

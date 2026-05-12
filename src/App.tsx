@@ -273,12 +273,14 @@ export default function App() {
           onDeleteSelectedClip={deleteSelectedClip}
           onImportAudioFiles={importAudioFiles}
           isImportDisabled={isAudioImportDisabled}
+          isPlaying={transport.isPlaying}
           onMoveClip={moveClip}
           onSeekToBeat={seekToBeat}
           onSelectClip={selectClip}
           onTrimClipEnd={trimClipEnd}
           onTrimClipStart={trimClipStart}
           onToggleSnap={toggleSnapToGrid}
+          onTogglePlay={togglePlay}
           onZoomIn={() => zoomTimeline('in')}
           onZoomOut={() => zoomTimeline('out')}
           pixelsPerBeat={timeline.pixelsPerBeat}
