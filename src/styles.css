@@ -236,8 +236,97 @@ select {
   color: #3f4952;
 }
 
+.icon-button.is-active {
+  color: var(--blue);
+  background: var(--panel-strong);
+}
+
 .flip-x {
   transform: scaleX(-1);
+}
+
+.project-menu-control {
+  position: relative;
+  display: grid;
+}
+
+.project-menu-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  width: 280px;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #11171b;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
+}
+
+.project-menu-head {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px 4px 9px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.project-menu-head strong,
+.project-menu-head small,
+.project-menu-popover button strong,
+.project-menu-popover button small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.project-menu-head strong {
+  font-size: 13px;
+}
+
+.project-menu-head small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.project-menu-popover button {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  min-height: 44px;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+}
+
+.project-menu-popover button:hover:not(:disabled) {
+  background: var(--panel-strong);
+}
+
+.project-menu-popover button svg {
+  color: var(--muted);
+}
+
+.project-menu-popover button span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.project-menu-popover button strong {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.project-menu-popover button small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
 }
 
 .metronome-button,

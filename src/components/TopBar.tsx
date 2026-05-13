@@ -2,6 +2,7 @@ import {
   ChevronDown,
   Circle,
   Cloud,
+  FolderOpen,
   Headphones,
   KeyRound,
   Menu,
@@ -12,6 +13,7 @@ import {
   Save,
   Settings2,
   SkipBack,
+  SlidersHorizontal,
   Square,
   Volume2,
 } from 'lucide-react'
@@ -39,6 +41,7 @@ type TopBarProps = {
   onStop: () => void
   onReturnToStart: () => void
   onSave: () => void | Promise<void>
+  onRestoreLastProject: () => void | Promise<void>
   onSetBpm: (bpm: number) => void
   onSetProjectKey: (key: ProjectKey) => void
   onSetMasteringPreset: (presetId: MasteringPresetId) => void
@@ -72,12 +75,14 @@ export function TopBar({
   onStop,
   onReturnToStart,
   onSave,
+  onRestoreLastProject,
   onSetBpm,
   onSetProjectKey,
   onSetMasteringPreset,
   onSetMasterVolume,
   onToggleMastering,
 }: TopBarProps) {
+  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState(false)
   const [isMasteringOpen, setIsMasteringOpen] = useState(false)
   const [beats, noteValue] = project.timeSignature
   const isRecordingBusy = recordingStatus === 'arming' || recordingStatus === 'encoding'
@@ -86,18 +91,127 @@ export function TopBar({
   const activePreset = MASTERING_PRESETS[mastering.presetId]
   const masteringSummary = mastering.enabled ? activePreset.label : 'Bypassed'
   const saveLabel = persistence.isSaving ? 'Saving...' : 'Save'
+  const closeProjectMenu = () => setIsProjectMenuOpen(false)
+
+  const runMenuAction = (action: () => void | Promise<void>) => {
+    closeProjectMenu()
+    void action()
+  }
 
   return (
     <header className="topbar">
       <section className="brand-cluster" aria-label="Project menu">
-        <button className="icon-button" aria-label="Open menu">
-          <Menu size={21} />
-        </button>
+        <div className="project-menu-control">
+          <button
+            aria-expanded={isProjectMenuOpen}
+            aria-haspopup="menu"
+            aria-label="Open menu"
+            className={isProjectMenuOpen ? 'icon-button is-active' : 'icon-button'}
+            onClick={() => setIsProjectMenuOpen((isOpen) => !isOpen)}
+            type="button"
+          >
+            <Menu size={21} />
+          </button>
+          {isProjectMenuOpen ? (
+            <div className="project-menu-popover" role="menu">
+              <div className="project-menu-head">
+                <strong>{project.name}</strong>
+                <small>
+                  {project.bpm} bpm · {project.key}
+                </small>
+              </div>
+              <button
+                disabled={isSaveDisabled}
+                onClick={() => runMenuAction(onSave)}
+                role="menuitem"
+                type="button"
+              >
+                <Save size={16} />
+                <span>
+                  <strong>Save Project</strong>
+                  <small>{isSaveDisabled ? 'Unavailable while busy' : 'Store this session locally'}</small>
+                </span>
+              </button>
+              <button
+                disabled={isTransportLocked || persistence.isRestoring}
+                onClick={() => runMenuAction(onReturnToStart)}
+                role="menuitem"
+                type="button"
+              >
+                <SkipBack size={16} />
+                <span>
+                  <strong>Return to Start</strong>
+                  <small>Move playhead to 00:00</small>
+                </span>
+              </button>
+              <button
+                disabled={isTransportLocked}
+                onClick={() => runMenuAction(onTogglePlay)}
+                role="menuitem"
+                type="button"
+              >
+                {transport.isPlaying ? <Pause size={16} /> : <Play size={16} fill="currentColor" />}
+                <span>
+                  <strong>{transport.isPlaying ? 'Pause Playback' : 'Start Playback'}</strong>
+                  <small>{transport.isPlaying ? 'Pause the current take' : 'Preview the timeline'}</small>
+                </span>
+              </button>
+              <button onClick={() => runMenuAction(onStop)} role="menuitem" type="button">
+                <Square size={15} fill="currentColor" />
+                <span>
+                  <strong>Stop</strong>
+                  <small>Stop playback or recording</small>
+                </span>
+              </button>
+              <button
+                disabled={isTransportLocked}
+                onClick={() =>
+                  runMenuAction(() => {
+                    onSetBpm(120)
+                    onSetProjectKey('C Major')
+                  })
+                }
+                role="menuitem"
+                type="button"
+              >
+                <SlidersHorizontal size={16} />
+                <span>
+                  <strong>Reset Session Tone</strong>
+                  <small>Set 120 bpm and C Major</small>
+                </span>
+              </button>
+              <button
+                disabled={persistence.isRestoring || isTransportLocked}
+                onClick={() => runMenuAction(onSave)}
+                role="menuitem"
+                type="button"
+              >
+                <Cloud size={16} />
+                <span>
+                  <strong>Sync Now</strong>
+                  <small>Save the latest local project state</small>
+                </span>
+              </button>
+              <button
+                disabled={persistence.isRestoring || isTransportLocked}
+                onClick={() => runMenuAction(onRestoreLastProject)}
+                role="menuitem"
+                type="button"
+              >
+                <FolderOpen size={16} />
+                <span>
+                  <strong>Restore Last Project</strong>
+                  <small>Load the latest recoverable local copy</small>
+                </span>
+              </button>
+            </div>
+          ) : null}
+        </div>
         <div className="app-mark" aria-hidden="true">
           <Mic2 size={18} />
         </div>
         <span className="app-name">Vocal Studio</span>
-        <button className="upgrade-button">
+        <button className="upgrade-button" disabled={isSaveDisabled} onClick={() => void onSave()} type="button">
           <Cloud size={15} />
           Sync
         </button>

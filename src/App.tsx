@@ -242,6 +242,7 @@ export default function App() {
     <main className="daw-shell" aria-label="Voice track digital audio workstation">
       <TopBar
         onReturnToStart={returnToStart}
+        onRestoreLastProject={restoreLastProject}
         onSave={saveProject}
         onSetBpm={setProjectBpm}
         onSetMasteringPreset={setMasteringPreset}
