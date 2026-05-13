@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import {
   AudioLines,
   ChevronDown,
@@ -7,24 +8,61 @@ import {
   Sparkles,
   Volume1,
 } from 'lucide-react'
-import type { Track } from '../types/daw'
+import type { AutoMixPreset, Track } from '../types/daw'
 
 type SidebarProps = {
   track: Track
   selectedTrackId: string
+  onApplyAutoMix: (trackId: string, preset: AutoMixPreset) => void
   onSelectTrack: (trackId: string) => void
   onToggleMute: (trackId: string) => void
   onToggleSolo: (trackId: string) => void
 }
 
+const autoMixPresets: Array<{ label: string; preset: AutoMixPreset; tag: string }> = [
+  { label: 'Clean Vocal', preset: 'balanced', tag: 'Smart' },
+  { label: 'Broadcast', preset: 'broadcast', tag: 'Tight' },
+  { label: 'Wide Hook', preset: 'wideHook', tag: 'Space' },
+  { label: 'Dry Focus', preset: 'dryFocus', tag: 'Dry' },
+  { label: 'Reset Mix', preset: 'reset', tag: 'Reset' },
+]
+
 export function Sidebar({
   track,
   selectedTrackId,
+  onApplyAutoMix,
   onSelectTrack,
   onToggleMute,
   onToggleSolo,
 }: SidebarProps) {
   const isSelected = track.id === selectedTrackId
+  const [isAutoMixOpen, setIsAutoMixOpen] = useState(false)
+  const [autoMixStatus, setAutoMixStatus] = useState<string | null>(null)
+  const statusTimeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (statusTimeoutRef.current) {
+        window.clearTimeout(statusTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const applyAutoMixPreset = (preset: AutoMixPreset) => {
+    const option = autoMixPresets.find((item) => item.preset === preset)
+
+    onApplyAutoMix(track.id, preset)
+    setIsAutoMixOpen(false)
+    setAutoMixStatus(option?.tag ?? 'Done')
+
+    if (statusTimeoutRef.current) {
+      window.clearTimeout(statusTimeoutRef.current)
+    }
+
+    statusTimeoutRef.current = window.setTimeout(() => {
+      setAutoMixStatus(null)
+    }, 2200)
+  }
 
   return (
     <aside className="sidebar" aria-label="Track list">
@@ -95,12 +133,48 @@ export function Sidebar({
         </div>
       </article>
 
-      <button className="automation-row">
-        <SlidersHorizontal size={17} />
-        <strong>Auto Mix</strong>
-        <span>AI</span>
-        <ChevronDown size={16} />
-      </button>
+      <div className="automation-panel">
+        <div className={isAutoMixOpen ? 'automation-row is-open' : 'automation-row'}>
+          <button
+            aria-label="Apply auto mix"
+            className="auto-mix-main"
+            onClick={() => applyAutoMixPreset('balanced')}
+            type="button"
+          >
+            <SlidersHorizontal size={17} />
+            <strong>Auto Mix</strong>
+            {autoMixStatus ? <em>{autoMixStatus}</em> : null}
+          </button>
+          <span className="ai-badge">AI</span>
+          <button
+            aria-expanded={isAutoMixOpen}
+            aria-haspopup="menu"
+            aria-label="Auto mix presets"
+            className="auto-mix-menu-button"
+            onClick={() => setIsAutoMixOpen(!isAutoMixOpen)}
+            type="button"
+          >
+            <ChevronDown size={16} />
+          </button>
+        </div>
+
+        {isAutoMixOpen ? (
+          <div className="auto-mix-menu" role="menu">
+            {autoMixPresets.map((option) => (
+              <button
+                className={option.preset === 'reset' ? 'auto-mix-preset is-reset' : 'auto-mix-preset'}
+                key={option.preset}
+                onClick={() => applyAutoMixPreset(option.preset)}
+                role="menuitem"
+                type="button"
+              >
+                <strong>{option.label}</strong>
+                <small>{option.tag}</small>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
     </aside>
   )
 }

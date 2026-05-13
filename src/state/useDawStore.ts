@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type {
   AudioClip,
+  AutoMixPreset,
   AutoPitchSettings,
   CompressorSettings,
   DelaySettings,
@@ -125,6 +126,7 @@ type DawState = {
   saveProject: () => Promise<void>
   restoreLastProject: () => Promise<void>
   updateTrackMixer: <K extends MixerKey>(trackId: string, key: K, value: MixerState[K]) => void
+  applyAutoMix: (trackId: string, preset: AutoMixPreset) => void
   toggleTrackMute: (trackId: string) => void
   toggleTrackSolo: (trackId: string) => void
   updateAutoPitch: <K extends AutoPitchKey>(key: K, value: AutoPitchSettings[K]) => void
@@ -249,6 +251,258 @@ function normalizeTrack(track: Track): Track {
       },
     },
   }
+}
+
+type AutoMixAnalysis = {
+  averagePeak: number
+  dynamics: number
+  maxPeak: number
+  presence: number
+}
+
+function getPercentile(values: number[], percentile: number): number {
+  if (values.length === 0) {
+    return 0
+  }
+
+  const index = Math.min(values.length - 1, Math.max(0, Math.round((values.length - 1) * percentile)))
+
+  return values[index]
+}
+
+function analyzeTrackForAutoMix(trackId: string, clips: AudioClip[]): AutoMixAnalysis {
+  const peaks: number[] = []
+
+  clips.forEach((clip) => {
+    if (clip.trackId !== trackId || clip.missingAudio) {
+      return
+    }
+
+    clip.waveformPeaks.forEach((peak) => {
+      const absolutePeak = Math.abs(peak)
+
+      if (Number.isFinite(absolutePeak)) {
+        peaks.push(absolutePeak)
+      }
+    })
+  })
+
+  if (peaks.length === 0) {
+    return {
+      averagePeak: 0.34,
+      dynamics: 0.48,
+      maxPeak: 0.72,
+      presence: 0.42,
+    }
+  }
+
+  const sortedPeaks = [...peaks].sort((a, b) => a - b)
+  const peakTotal = peaks.reduce(
+    (summary, peak) => ({
+      activeCount: summary.activeCount + (peak > 0.08 ? 1 : 0),
+      maxPeak: Math.max(summary.maxPeak, peak),
+      total: summary.total + peak,
+    }),
+    { activeCount: 0, maxPeak: 0, total: 0 },
+  )
+  const averagePeak = peakTotal.total / peaks.length
+  const p50 = getPercentile(sortedPeaks, 0.5)
+  const p90 = getPercentile(sortedPeaks, 0.9)
+
+  return {
+    averagePeak: clamp(averagePeak, 0, 1),
+    dynamics: clamp((p90 - p50) / Math.max(0.08, p90), 0, 1),
+    maxPeak: clamp(peakTotal.maxPeak, 0, 1),
+    presence: clamp(peakTotal.activeCount / peaks.length, 0, 1),
+  }
+}
+
+function getAutoMixDelayTime(bpm: number, beatMultiplier: number): number {
+  return Math.round(clamp((60000 / bpm) * beatMultiplier, 90, 640) / 5) * 5
+}
+
+function buildAutoMixMixer(
+  currentMixer: MixerState,
+  preset: AutoMixPreset,
+  analysis: AutoMixAnalysis,
+  bpm: number,
+): MixerState {
+  if (preset === 'reset') {
+    return {
+      ...defaultMixer,
+      muted: currentMixer.muted,
+      solo: currentMixer.solo,
+    }
+  }
+
+  const levelBoost = (0.58 - analysis.maxPeak) * 22 + (0.34 - analysis.averagePeak) * 12
+  const volume = Math.round(clamp(74 + levelBoost, 58, 90))
+  const compressorThreshold = Math.round(clamp(-16 - analysis.dynamics * 12 - (analysis.maxPeak > 0.86 ? 3 : 0), -34, -12))
+  const compressorRatio = Number(clamp(2.4 + analysis.dynamics * 2.6 + (analysis.maxPeak > 0.9 ? 0.8 : 0), 2.2, 6).toFixed(1))
+  const makeupGain = Math.round(clamp((0.46 - analysis.averagePeak) * 10, -2, 6))
+  const lowCut = analysis.presence < 0.24 ? -2 : -4
+  const lowMidCut = analysis.averagePeak > 0.34 ? -3 : -2
+  const highLift = analysis.presence < 0.32 ? 2 : 3
+
+  const baseMixer: MixerState = {
+    ...currentMixer,
+    volume,
+    pan: 0,
+    reverbEnabled: true,
+    reverb: 16,
+    reverbSize: 46,
+    reverbTone: 62,
+    reverbDrive: 22,
+    reverbWidth: 58,
+    reverbPreDelay: 38,
+    reverbHpFilter: 190,
+    reverbModEnabled: true,
+    reverbModAmount: 16,
+    reverbEqEnabled: true,
+    reverbEqGain: -1,
+    reverbEqFrequency: 2800,
+    delay: {
+      ...currentMixer.delay,
+      enabled: false,
+      loFi: false,
+      pingPong: false,
+      timeMs: getAutoMixDelayTime(bpm, 0.5),
+      feedback: 20,
+      mix: 10,
+      modulationDepth: 12,
+      modulationRate: 18,
+      hiPass: 36,
+      loPass: 72,
+      output: -2,
+      analog: 1,
+    },
+    compressor: {
+      enabled: true,
+      threshold: compressorThreshold,
+      ratio: compressorRatio,
+      attackMs: analysis.dynamics > 0.62 ? 8 : 14,
+      releaseMs: analysis.presence > 0.58 ? 150 : 210,
+      makeupGain,
+    },
+    eqBands: {
+      low: lowCut,
+      lowMid: lowMidCut,
+      mid: 1,
+      highMid: 3,
+      high: highLift,
+    },
+  }
+
+  if (preset === 'broadcast') {
+    return {
+      ...baseMixer,
+      volume: Math.round(clamp(volume + 3, 62, 92)),
+      reverbEnabled: false,
+      reverb: 5,
+      reverbSize: 24,
+      reverbDrive: 12,
+      reverbWidth: 34,
+      reverbPreDelay: 18,
+      delay: {
+        ...baseMixer.delay,
+        enabled: false,
+        mix: 0,
+        feedback: 8,
+      },
+      compressor: {
+        ...baseMixer.compressor,
+        threshold: Math.round(clamp(compressorThreshold - 5, -38, -16)),
+        ratio: Number(clamp(compressorRatio + 1.4, 3.4, 7).toFixed(1)),
+        attackMs: 7,
+        releaseMs: 135,
+        makeupGain: Math.round(clamp(makeupGain + 2, 0, 7)),
+      },
+      eqBands: {
+        low: -5,
+        lowMid: -3,
+        mid: 2,
+        highMid: 3,
+        high: 1,
+      },
+    }
+  }
+
+  if (preset === 'wideHook') {
+    return {
+      ...baseMixer,
+      volume: Math.round(clamp(volume - 2, 56, 88)),
+      reverb: 26,
+      reverbSize: 68,
+      reverbTone: 66,
+      reverbDrive: 30,
+      reverbWidth: 82,
+      reverbPreDelay: 64,
+      reverbModAmount: 30,
+      delay: {
+        ...baseMixer.delay,
+        enabled: true,
+        pingPong: true,
+        timeMs: getAutoMixDelayTime(bpm, 0.375),
+        feedback: 32,
+        mix: 18,
+        modulationDepth: 26,
+        modulationRate: 24,
+        hiPass: 42,
+        loPass: 64,
+        output: -3,
+        analog: 2,
+      },
+      compressor: {
+        ...baseMixer.compressor,
+        ratio: Number(clamp(compressorRatio - 0.4, 2.2, 4.8).toFixed(1)),
+        attackMs: 18,
+        releaseMs: 230,
+      },
+      eqBands: {
+        low: -4,
+        lowMid: -2,
+        mid: 1,
+        highMid: 4,
+        high: 4,
+      },
+    }
+  }
+
+  if (preset === 'dryFocus') {
+    return {
+      ...baseMixer,
+      volume: Math.round(clamp(volume + 1, 58, 90)),
+      reverb: 8,
+      reverbSize: 30,
+      reverbTone: 56,
+      reverbDrive: 16,
+      reverbWidth: 42,
+      reverbPreDelay: 22,
+      reverbModEnabled: false,
+      delay: {
+        ...baseMixer.delay,
+        enabled: false,
+        mix: 0,
+        feedback: 10,
+      },
+      compressor: {
+        ...baseMixer.compressor,
+        threshold: Math.round(clamp(compressorThreshold - 2, -34, -14)),
+        ratio: Number(clamp(compressorRatio + 0.7, 2.8, 6).toFixed(1)),
+        attackMs: 10,
+        releaseMs: 165,
+      },
+      eqBands: {
+        low: -4,
+        lowMid: -3,
+        mid: 2,
+        highMid: 2,
+        high: 0,
+      },
+    }
+  }
+
+  return baseMixer
 }
 
 export const useDawStore = create<DawState>((set, get) => ({
@@ -561,6 +815,22 @@ export const useDawStore = create<DawState>((set, get) => ({
                 ...track.mixer,
                 [key]: value,
               },
+            }
+          : track,
+      ),
+    })),
+  applyAutoMix: (trackId, preset) =>
+    set(({ clips, project, tracks }) => ({
+      tracks: tracks.map((track) =>
+        track.id === trackId
+          ? {
+              ...track,
+              mixer: buildAutoMixMixer(
+                track.mixer,
+                preset,
+                analyzeTrackForAutoMix(trackId, clips),
+                project.bpm,
+              ),
             }
           : track,
       ),
