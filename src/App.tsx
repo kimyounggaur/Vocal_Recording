@@ -39,6 +39,7 @@ export default function App() {
   const setProjectKey = useDawStore((state) => state.setProjectKey)
   const saveProject = useDawStore((state) => state.saveProject)
   const restoreLastProject = useDawStore((state) => state.restoreLastProject)
+  const addTrack = useDawStore((state) => state.addTrack)
   const updateTrackMixer = useDawStore((state) => state.updateTrackMixer)
   const applyAutoMix = useDawStore((state) => state.applyAutoMix)
   const toggleTrackMute = useDawStore((state) => state.toggleTrackMute)
@@ -260,12 +261,13 @@ export default function App() {
       />
       <div className="workspace-grid">
         <Sidebar
+          onAddTrack={addTrack}
           onApplyAutoMix={applyAutoMix}
           onSelectTrack={selectTrack}
           onToggleMute={toggleTrackMute}
           onToggleSolo={toggleTrackSolo}
           selectedTrackId={selectedTrackId}
-          track={selectedTrack}
+          tracks={tracks}
         />
         <Timeline
           bars={20}

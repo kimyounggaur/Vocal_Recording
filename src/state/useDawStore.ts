@@ -30,6 +30,7 @@ import {
   saveProjectJson,
   toPersistedClip,
 } from '../storage/projectStorage'
+import { createId } from '../utils/id'
 import { beatToSeconds, clamp, MAX_BPM, MIN_BPM, secondsToBeat, snapBeatToGrid } from '../utils/time'
 
 type MixerKey = keyof MixerState
@@ -91,6 +92,21 @@ const defaultMixer: MixerState = {
   eqBands: defaultEqBands,
 }
 
+function createDefaultMixer(): MixerState {
+  return {
+    ...defaultMixer,
+    delay: {
+      ...defaultDelaySettings,
+    },
+    compressor: {
+      ...defaultCompressorSettings,
+    },
+    eqBands: {
+      ...defaultEqBands,
+    },
+  }
+}
+
 type DawState = {
   project: Project
   transport: TransportState
@@ -125,6 +141,7 @@ type DawState = {
   setProjectKey: (key: ProjectKey) => void
   saveProject: () => Promise<void>
   restoreLastProject: () => Promise<void>
+  addTrack: () => void
   updateTrackMixer: <K extends MixerKey>(trackId: string, key: K, value: MixerState[K]) => void
   applyAutoMix: (trackId: string, preset: AutoMixPreset) => void
   toggleTrackMute: (trackId: string) => void
@@ -160,7 +177,7 @@ const defaultTrack: Track = {
   name: 'Voice/Audio',
   type: 'voice-audio',
   armed: true,
-  mixer: defaultMixer,
+  mixer: createDefaultMixer(),
 }
 
 const inputDevices: InputDevice[] = [
@@ -253,6 +270,17 @@ function normalizeTrack(track: Track): Track {
   }
 }
 
+function createTrack(index: number): Track {
+  return {
+    id: createId('track'),
+    index,
+    name: `Voice/Audio ${String(index).padStart(2, '0')}`,
+    type: 'voice-audio',
+    armed: true,
+    mixer: createDefaultMixer(),
+  }
+}
+
 type AutoMixAnalysis = {
   averagePeak: number
   dynamics: number
@@ -329,7 +357,7 @@ function buildAutoMixMixer(
 ): MixerState {
   if (preset === 'reset') {
     return {
-      ...defaultMixer,
+      ...createDefaultMixer(),
       muted: currentMixer.muted,
       solo: currentMixer.solo,
     }
@@ -805,6 +833,17 @@ export const useDawStore = create<DawState>((set, get) => ({
       }))
     }
   },
+  addTrack: () =>
+    set(({ tracks }) => {
+      const nextIndex = Math.max(0, ...tracks.map((track) => track.index)) + 1
+      const track = createTrack(nextIndex)
+
+      return {
+        tracks: [...tracks, track],
+        selectedTrackId: track.id,
+        selectedClipId: null,
+      }
+    }),
   updateTrackMixer: (trackId, key, value) =>
     set(({ tracks }) => ({
       tracks: tracks.map((track) =>

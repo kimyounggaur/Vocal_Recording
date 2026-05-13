@@ -553,6 +553,8 @@ select {
 }
 
 .sidebar {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
   border-right: 1px solid var(--line);
   background: #060809;
@@ -577,6 +579,11 @@ select {
   width: 36px;
   height: 36px;
   border-radius: 999px;
+}
+
+.track-list {
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .track-card {
