@@ -561,6 +561,7 @@ select {
 }
 
 .track-actions {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 36px 36px;
   gap: 8px;
@@ -579,6 +580,188 @@ select {
   width: 36px;
   height: 36px;
   border-radius: 999px;
+}
+
+.round-tool.is-active {
+  color: var(--blue);
+  background: var(--panel-strong);
+}
+
+.track-tool-popover {
+  position: absolute;
+  top: 48px;
+  right: 8px;
+  z-index: 12;
+  display: grid;
+  width: 264px;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #10161a;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+}
+
+.track-tool-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.track-tool-head strong,
+.track-tool-head small,
+.route-track-select span,
+.quick-mixer-slider strong,
+.quick-mixer-slider small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.track-tool-head strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.track-tool-head small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.route-track-list {
+  display: grid;
+  max-height: 240px;
+  overflow-y: auto;
+  gap: 5px;
+}
+
+.route-track-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px 28px;
+  align-items: center;
+  gap: 5px;
+}
+
+.route-track-select {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  min-height: 34px;
+  overflow: hidden;
+  gap: 7px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+  text-align: left;
+}
+
+.route-track-select:hover,
+.track-tool-action:hover,
+.quick-mixer-actions button:hover,
+.route-track-row.is-selected .route-track-select {
+  background: var(--panel-strong);
+}
+
+.route-track-select strong,
+.route-mini-toggle {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.route-track-select span {
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.route-track-select i {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  left: 8px;
+  display: block;
+  height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--yellow), var(--accent-2));
+}
+
+.route-mini-toggle {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.route-mini-toggle.is-on {
+  color: #07100e;
+  background: var(--accent-2);
+}
+
+.track-tool-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  gap: 7px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.quick-mixer-slider {
+  display: grid;
+  gap: 6px;
+}
+
+.quick-mixer-slider span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 8px;
+}
+
+.quick-mixer-slider strong,
+.quick-mixer-slider small {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.quick-mixer-slider strong {
+  color: var(--muted);
+}
+
+.quick-mixer-slider input {
+  width: 100%;
+  accent-color: var(--accent-2);
+}
+
+.quick-mixer-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.quick-mixer-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 31px;
+  gap: 5px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .track-list {

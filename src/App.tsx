@@ -266,6 +266,7 @@ export default function App() {
           onSelectTrack={selectTrack}
           onToggleMute={toggleTrackMute}
           onToggleSolo={toggleTrackSolo}
+          onUpdateMixer={updateTrackMixer}
           selectedTrackId={selectedTrackId}
           tracks={tracks}
         />
